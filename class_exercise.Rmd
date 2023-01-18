@@ -1,0 +1,27 @@
+---
+title: "Week 1"
+author: "Rosalee Elting"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+#Week 1
+### Writing a Michaelis-Menten Function 
+Fixed Values + Umax = 1 
+Ks = 100 
+Formula U = Umax S / Ks + S
+ 
+```{r mm-function}
+mm_function <- function(Um, Ks, S){
+ U <- Um*S/(Ks+S)
+ plot(S,U)
+ }
+S <- seq(from = 0, to = 200, by = 1)
+mm_function(Um =1, Ks = 100, S = S)
+  
+```
+
+
