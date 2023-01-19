@@ -3,8 +3,8 @@ title: "EM_S23_Week1"
 author: "Rosalee Elting"
 date: "`r Sys.Date()`"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -111,6 +111,134 @@ z[p_vals >=0.975] <- "upper_tail"
 
 table(z)
 ```
+
+# Week 1 - Day 2
+### Dyanmic Models - Exponential growth model 
+Formula: 
+Nt = N0 e^kt
+Known values: 
+K = 0.05 
+N0 =10 
+```{r}
+#as a function
+dyn_function <- function(K,N0){ 
+ Nt <- N0*exp(K*t)
+ plot(t,Nt)
+}
+t <- seq(from = 0, to = 200, by = 0.5)
+dyn_function(K=0.05, N0= 10)
+
+#not as a function, as a single vector. 
+N0 <- 10 
+K <- .05
+t <- seq(from =0, to = 200, by = 0.5)
+Nt <- N0*exp(K*t)
+plot(t, Nt)
+```
+### Ricker Model 
+Formula: 
+Nt+1 = Nt*e(rmax(1-N/K))
+Known values: 
+k = 100 
+r = 1.5
+t = 0 to 100
+We're forced to write a loop, because the current value is the input for the following value. Need a starting value, so we'll use: 
+N1= 60 
+
+```{r}
+#t <- seq(0:100)
+k <- 100
+r <- 3.0
+N <- NA
+N[1] <- 60
+t <- seq(1:100)
+
+#the below works, but I also want to standardize the way I assigned the length so it's not fixed in the loop but rather pre-assigned. 
+
+# for(i in 2:100) {
+#   N[i] <- N[i-1]*exp(r*(1-N[i-1]/k))
+# }
+
+for(i in 2:length(t-1)) {
+  N[i] <- N[i-1]*exp(r*(1-N[i-1]/k))
+}
+#plotting N over time 
+plot(t, N, type = "l", ylim = c(0,300))
+     
+#plotting Nt vs Nt-1 as a plot. This is following a pattern and deterministic, even though prior graph looks like pure chaos. 
+# Phase-space diagram 
+plot(N[1:99], N[2:100])
+```
+### Numerical Approximation 
+Formulas we're using: 
+Exponential growth
+Nt = N0e^kt
+Numerical approximation: 
+Nt = Nt-1 KNt-1 deltaT
+Known values: 
+K = 0.01
+N0 =1 
+up to t =20 
+Goal: plot both on same axis, use different colors. 
+
+```{r}
+K <- 0.1 
+
+NNt <- NA
+NNt[1] <- 1
+N0 <- 1
+t <- seq(from =1, to = 20, by = 1)
+#exponential 
+ENt <- N0*exp(K*t)
+#numerical integration 
+for(i in 2:length(t-1)) {
+  NNt[i] <- NNt[i-1]+K*NNt[i-1]*1 
+}
+
+#N[i] <- N[i-1]*exp(r*(1-N[i-1]/k))
+plot(t, ENt, type= "line", col = "violet",ylab = "Nt")
+lines(t, NNt, col= "cornflowerblue")
+
+```
+### Numerical Integration of Lotka- Volterra Model 
+Formulas: 
+Nt = Nt-1 + (rNt-1 - aNt-1Pt-1) delta t
+Pt = Pt-1+ (abNt-1 Pt-1  - sPt-1) delta t
+Known values : 
+delta t = 0.1 
+length of run = 2000
+n[1] = 20 
+p[1] = 1 
+r = 0.04
+a = 0.005
+s= 0.1
+
+```{r}
+n <- seq(from = 1, to = 200.9, by =0.1)
+Nt <- NA
+Nt[1] <- 20
+Pt <- NA
+Pt[1] <- 1
+r <- 0.04
+a <- 0.005 
+b <- 0.2
+s <- 0.1
+deltat <- 0.1
+
+for (i in 2:length(n)) { 
+  Nt[i] <- Nt[i-1] + (r*Nt[i-1] - a*Nt[i-1]*Pt[i-1])*(n[i]-n[i-1])
+  Pt[i] <- Pt[i-1] + (a*b*Nt[i-1]*Pt[i-1]- s*Pt[i-1])*(n[i]-n[i-1])
+}
+
+plot(n, Nt, col = "violet",ylab = "Nt")
+lines(n, Pt, col= "darkblue")
+#phase diagram is a circle 
+#there is an equilibrium that exists in the center of this circle. As N goes up, then P catches, and raises until N decreases and P does again. 
+plot(Nt, Pt)
+```
+
+ 
+
 
 
 
