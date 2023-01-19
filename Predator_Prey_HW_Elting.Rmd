@@ -1,0 +1,20 @@
+---
+title: "Predator_Prey_HW_Elting"
+author: "Rosalee Elting"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Predator-Prey Model 
+A more realistic model beyond the Lotka-Volterra Model, which doens't allow for infinite predator consumption when prey level are high. 
+
+$$ 
+\frac{dn}{dt}
+$$
+
+
+
