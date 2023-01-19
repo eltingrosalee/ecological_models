@@ -1,0 +1,116 @@
+---
+title: "EM_S23_Week1"
+author: "Rosalee Elting"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Week 1 - Day 1
+### Writing a Michaelis-Menten Function 
+Fixed Values: 
+Umax = 1 
+Ks = 100 
+Formula U = Umax S / Ks + S
+```{r mm-function}
+mm_function <- function(Um, Ks, S){
+ U <- Um*S/(Ks+S)
+ plot(S,U)
+ }
+S <- seq(from = 0, to = 200, by = 1)
+mm_function(Um =1, Ks = 100, S = S)
+```
+### Using a Threshold Switching Equation
+x = sequence from 1 to 30 
+Tao = 17 
+g1 y = b
+g2 y = ax+b 
+b = 10 
+a = 5
+
+Here is the structure of the argument I should use. 
+ifelse(condition- a Boolean statement , value 1, value 2)
+The condition: X is <17 or >=17 
+
+```{r threshold-switching}
+x <- seq(1:30)
+a <- 5
+b <- 10 
+y <- ifelse(x >= 17, a*x+b, b)
+
+plot(x, y)
+```
+### Week 1 - Day 1 Homework 
+#### For Loops
+Gotelli - Basic Anatomy and Use of For Loops
+
+for(var in seq) { 
+Body for the loop, often the call to a function 
+}
+
+var is a counter variable that holds the current values of the counter in the loop
+Seq is an integer vector (defines start and end values of the loop)
+
+i,j,k for var (counter)
+
+Using seq_along(df) is a safe way to do rather than length(df) so that it won't retun a result if vector is blank. 
+
+Loop tips: 
+Do NOT change object dimenstion inside a loop 
+Avoid these functions: cbind, rbind, c, list
+
+
+```{r}
+my_dogs <- (c("chow", "akita", "malamute", "husky", "samoyed"))
+
+for(i in seq_along(my_dogs)) {
+  cat("i =", i, "my_dogs[i] =", my_dogs[i], "\n") 
+}
+```
+```{r}
+my_bad_dogs <- NULL
+for (i in seq_along(my_bad_dogs)) {
+  cat("i =", i, "my_bad_dogs[i] =", my_bad_dogs[i], "\n")
+}
+```
+Can define vector length from a constant 
+```{r}
+zz <- 5
+for( i in seq_len(zz)) { 
+  cat("i =", i, "my_dogs[i] =", my_dogs[i], "\n")
+  }
+```
+#### If Else Function 
+Format: 
+ifelse(test, yes, no)
+test is an object that can be coerced into a logical true/false for each element in the vector 
+Yes returns values for true elements in the test 
+no returns values for fasle elements in the test 
+
+Examples: suppose we have an insect pop in which each female lays on average 10.2 eggs, following a Poisson distribution. lambda = 10.2 here. However, there is a 35% chance of parasatism, in which case no eggs are laid. Here is a random sample of eggs laid for a group of 1000 individuals. 
+
+```{r}
+#makes 1000 random uniform values 
+tester <- runif(1000)
+eggs <- ifelse(tester > 0.35, rpois(n=1000, lambda=10.2), 0)
+hist(eggs)
+```
+This produces a mixture model where there is a peak at ~10.2. Also a spike at zero, which represents the 0s created from Poisson itself, but also the 35% of individuals that didn't reproduce due to parasitism. 
+
+Example 2: 
+Suppose we have a vector of probability values (such as from a simulation). We want to highlight significant values in the vector for plotting 
+
+```{r}
+p_vals <- runif(1000)
+z <- ifelse(p_vals <=0.025, "lower_tail", "non_significant")
+z[p_vals >=0.975] <- "upper_tail"
+
+table(z)
+```
+
+
+
