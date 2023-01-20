@@ -2,19 +2,87 @@
 title: "Predator_Prey_HW_Elting"
 author: "Rosalee Elting"
 date: "`r Sys.Date()`"
-output: html_document
+output: 
+  html_document: 
+    toc: true
+    toc_float: true
+    number_sections: true
+    theme: "cerulean"
+    
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Predator-Prey Model 
-A more realistic model beyond the Lotka-Volterra Model, which doens't allow for infinite predator consumption when prey level are high. 
+# Predator-Prey Models: Introduction 
+A more realistic model beyond the Lotka-Volterra Model, which allows for a limit on the L-V model's shortcoming with infinite predator consumption when prey level are high. Here, we incorporate more variables, indicated in the variable index below by an asterisk. 
 
-$$ 
-\frac{dn}{dt}
-$$
+# Index of Variables in Model 
+
+$P$ - Predator number\
+$N$ - Prey number\
+$r$ - growth rate of prey\
+$K$ - Carrying capacity or prey\
+$u_{max}$ - maximum predation rate *\
+$k_s$ - density of prey where Predator (P) eat 50% of their maximum rate *\
+$b$ - conversion efficiency of prey biomass to predator biomass\
+$d$ - predator death rate\
 
 
+# Logistic Prey Model with a functional response 
+Following are two models, representing the change in prey and predators over time. They are as follows. 
+## Prey Model 
+$$\frac{dN}{dt}=rN(1-\frac{N}{K}) - \frac{u_{max}N}{k_s+N}\times P$$
+
+## Predatory Model 
+$$\frac{dP}{dt}= \frac{u_{max}N}{k_s+N}\times Pb - dP$$
+
+# Numerical Integration of the Logistic Prey Models 
+Below are the modified version of the above models that were transformed to represent numerical integration of the formulas for the prey and predator formulas. 
+## Prey Formula 
+Need to double check below, they focusing on formatting
+$$N_t = N_{t-1}+(rN_{t-1}\times (1- \frac{N}{K}) - \frac {U_{max}N_{t-1}} {(K_s+N_{t-1})} \times P_{t-1}) \Delta t  $$
+Nt = Nt-1  ( r*Nt-1 ( 1- (N/K)) - Umax*Nt-1 / (Ks +Nt-1))deltat
+## Predator Formula
+Pt= Pt-1 + ((umax*Nt-1/(Ks+Nt-1) * b * Pt-1) - dPt-1)*deltat 
+$$P_t = P_{t-1} + (\frac {U_{max}N_{t-1}}{(K_s + N_{t-1})} \times bP_{t-1} - dP_{t-1}) \Delta t$$
+# Execution of the Numberical Integration of the Logistic Prey Model 
+Now that I have a numerical integration of this model, I will use this model to represent prey and predator relationships with the following given values. 
+```{r}
+#length of run : 15000
+n <- seq(from = 1, t =1500.1, by = 0.1)
+Nt <- NA
+Pt <- NA
+#Delta time, time steps
+dt <- 0.1
+#starting values for each data set 
+Nt[1] <- 20 
+Pt[1] <- 1
+r <- 0.15 
+
+b <- 0.2
+d <- 0.01
+
+K <- 25
+ks <- 20 
+umax <- 0.2
+
+#Loop
+for (i in 2: length(n)) {
+  Nt[i] <- Nt[i-1] + (r*Nt[i-1]*(1-(Nt[i-1]/k))-(umax*Nt[i-1]/(ks + Nt[i-1]))*Pt[i-1])*(n[i]-n[i-1])
+  Pt[i] <- Pt[i-1] + (umax*Nt[i-1]/(ks +Nt[i-1])*b*Pt[i-1] -d*Pt[i-1])*(n[i]-n[i-1])
+}
+```
+
+
+# Plots of Relationships 
+plot predators and prey as function of time 
+and predator vs prey 
+```{r}
+plot(n, Nt, col = "violet", ylab = "Nt")
+lines(n, Pt, col= "darkblue")
+
+plot(Nt,Pt)
+```
 
