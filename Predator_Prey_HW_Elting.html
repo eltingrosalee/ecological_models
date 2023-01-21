@@ -11,7 +11,7 @@
 
 <meta name="author" content="Rosalee Elting" />
 
-<meta name="date" content="2023-01-20" />
+<meta name="date" content="2023-01-21" />
 
 <title>Predator_Prey_HW_Elting</title>
 
@@ -1487,7 +1487,7 @@ border-radius: 0px;
 
 <h1 class="title toc-ignore">Predator_Prey_HW_Elting</h1>
 <h4 class="author">Rosalee Elting</h4>
-<h4 class="date">2023-01-20</h4>
+<h4 class="date">2023-01-21</h4>
 
 </div>
 
@@ -1542,13 +1542,13 @@ prey and predator formulas.</p>
 <div id="prey-formula" class="section level2" number="4.1">
 <h2><span class="header-section-number">4.1</span> Prey Formula</h2>
 <p><span class="math display">\[N_t = N_{t-1}+(rN_{t-1}\times (1-
-\frac{N}{K}) - \frac {U_{max}N_{t-1}} {(K_s+N_{t-1})} \times P_{t-1})
-\Delta t  \]</span></p>
+\frac{N_{t-1}}{K}) - \frac {u_{max}N_{t-1}} {(K_s+N_{t-1})} \times
+P_{t-1}) \Delta t  \]</span></p>
 </div>
 <div id="predator-formula" class="section level2" number="4.2">
 <h2><span class="header-section-number">4.2</span> Predator Formula</h2>
 <p><span class="math display">\[P_t = P_{t-1} + (\frac
-{U_{max}N_{t-1}}{(K_s + N_{t-1})} \times bP_{t-1} - dP_{t-1}) \Delta
+{u_{max}N_{t-1}}{(K_s + N_{t-1})} \times bP_{t-1} - dP_{t-1}) \Delta
 t\]</span></p>
 </div>
 </div>
@@ -1556,9 +1556,13 @@ t\]</span></p>
 <h1><span class="header-section-number">5</span> Execution of the
 Numberical Integration of the Logistic Prey Model</h1>
 <p>Now that I have a numerical integration of this model, I will use
-this model to represent prey and predator relationships with the
-following given values of the variables listed in the (#Index of
-Variables in Model)</p>
+this model to represent prey and predator relationships using the
+variables listed in the <a href="#index-of-variables-in-model">Index of
+Variables in Model</a>.</p>
+<div id="variables-given" class="section level2" number="5.1">
+<h2><span class="header-section-number">5.1</span> Variables given</h2>
+<p>Included in this chunk are values of these variables given in the
+assignment.</p>
 <pre class="r"><code>#length of run : 15000
 n &lt;- seq(from = 1, t =1500.1, by = 0.1)
 #creating vectors to fill with prey and predator data
@@ -1577,13 +1581,16 @@ d &lt;- 0.01
 
 K &lt;- 25
 ks &lt;- 20 
-umax &lt;- 0.2
-
-#Loop to evaluate predator and prey numbers at each time step. 
-for (i in 2: length(n)) {
+umax &lt;- 0.2</code></pre>
+</div>
+<div id="loop-to-evaluate-predator-and-prey-numbers-at-each-time-step." class="section level2" number="5.2">
+<h2><span class="header-section-number">5.2</span> Loop to evaluate
+predator and prey numbers at each time step.</h2>
+<pre class="r"><code>for (i in 2: length(n)) {
   Nt[i] &lt;- Nt[i-1] + (r*Nt[i-1]*(1-(Nt[i-1]/K))-(umax*Nt[i-1]/(ks + Nt[i-1]))*Pt[i-1])*(n[i]-n[i-1])
   Pt[i] &lt;- Pt[i-1] + (umax*Nt[i-1]/(ks +Nt[i-1])*b*Pt[i-1] -d*Pt[i-1])*(n[i]-n[i-1])
 }</code></pre>
+</div>
 </div>
 <div id="plots-of-relationships" class="section level1" number="6">
 <h1><span class="header-section-number">6</span> Plots of

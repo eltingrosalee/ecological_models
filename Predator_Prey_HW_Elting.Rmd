@@ -45,15 +45,19 @@ Below are the modified version of the above models that were transformed to repr
 
 ## Prey Formula 
 
-$$N_t = N_{t-1}+(rN_{t-1}\times (1- \frac{N}{K}) - \frac {U_{max}N_{t-1}} {(K_s+N_{t-1})} \times P_{t-1}) \Delta t  $$
+$$N_t = N_{t-1}+(rN_{t-1}\times (1- \frac{N_{t-1}}{K}) - \frac {u_{max}N_{t-1}} {(K_s+N_{t-1})} \times P_{t-1}) \Delta t  $$
 
 
 ## Predator Formula
 
-$$P_t = P_{t-1} + (\frac {U_{max}N_{t-1}}{(K_s + N_{t-1})} \times bP_{t-1} - dP_{t-1}) \Delta t$$
+$$P_t = P_{t-1} + (\frac {u_{max}N_{t-1}}{(K_s + N_{t-1})} \times bP_{t-1} - dP_{t-1}) \Delta t$$
 
 # Execution of the Numberical Integration of the Logistic Prey Model 
-Now that I have a numerical integration of this model, I will use this model to represent prey and predator relationships with the following given values of the variables listed in the (#Index of Variables in Model)
+Now that I have a numerical integration of this model, I will use this model to represent prey and predator relationships using the variables listed in the [Index of Variables in Model]. 
+
+## Variables given 
+Included in this chunk are values of these variables given in the assignment. 
+
 ```{r}
 #length of run : 15000
 n <- seq(from = 1, t =1500.1, by = 0.1)
@@ -74,8 +78,11 @@ d <- 0.01
 K <- 25
 ks <- 20 
 umax <- 0.2
+```
 
-#Loop to evaluate predator and prey numbers at each time step. 
+
+## Loop to evaluate predator and prey numbers at each time step. 
+```{r}
 for (i in 2: length(n)) {
   Nt[i] <- Nt[i-1] + (r*Nt[i-1]*(1-(Nt[i-1]/K))-(umax*Nt[i-1]/(ks + Nt[i-1]))*Pt[i-1])*(n[i]-n[i-1])
   Pt[i] <- Pt[i-1] + (umax*Nt[i-1]/(ks +Nt[i-1])*b*Pt[i-1] -d*Pt[i-1])*(n[i]-n[i-1])
