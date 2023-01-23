@@ -102,5 +102,7 @@ legend(x = "topright", box.col = "bisque4",
        bg ="bisque2", box.lwd = 2 , title="LEGEND", 
        legend=c("Prey", "Predator"), 
        fill = c("darkorange","orchid"))
+
+plot(Nt, Pt)
 ```
 
