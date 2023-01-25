@@ -1,0 +1,97 @@
+---
+title: "EM_S23_Week2"
+author: "Rosalee Elting"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Week 2 - Day 1
+### Poisson distribution of discrete variables 
+Inputs: 
+Lambda 
+some z 
+
+Goal : plot probability mass function for lambda = 4 
+calculate mean 
+calculate variance 
+sum [z]
+
+```{r}
+l <- 4
+z <- seq(from = 0,to = 20,by =1)
+  
+
+pois <- function(z,l){ 
+  zgivl <- ((l^z)/factorial(z))*exp(-1*l)
+}
+
+zgivl <- pois(z,l)
+
+mu <- sum(z*zgivl)
+sig <- (z-mu)^2*zgivl
+add <- sum((z-mu)^2*zgivl)
+
+plot(z, zgivl)
+
+#the mean is not at 4 because there is an infinite amount of option for counts we could take. 
+```
+### Binomial distribution 
+```{r}
+z <- seq(from =0, to =10, by =1)
+phi = 0.4
+n <- 10
+nz <- factorial(n)/(factorial(z)*factorial(n-z))
+
+bino <- function(n, z, phi){
+  probz <- nz*(phi^z)*((1-phi)^(n-z))
+}
+
+zgivnphi <- bino(n, z, phi)
+
+#mean 
+mu <- sum(z*zgivnphi)
+sig <- (z-mu)^2*zgivnphi
+#variance
+add <- sum((z-mu)^2*zgivnphi)
+
+plot(z, zgivnphi)
+
+```
+### Looking at real data from a paper 
+This is fake data! 
+```{r}
+fish <- read.csv("fish_choice.csv")
+phi = 0.5
+
+fish <- as.numeric(fish$n)
+mu <- mean(fish)
+sig <- phi*24*(1-phi)
+
+add <- sum(phi*24*(1-phi))
+ 
+```
+
+```{r}
+#we're making a data set 
+# of randoms 
+#input for random binomial (number of repetitions, number of trials, phi probability of success)
+
+rand <- rbinom(20, 24, 0.5)
+hist(rand)
+hist(fish)
+# if wanted to make a loop of many of these random data sets and ordering their variances to see if we can get the 0.6 variance these authors report. 
+
+varfish <- NA
+for (i in 1:10000) { 
+  varfish[i] <- var(rbinom(20,24,0.5))
+}
+hist(varfish)
+sort(varfish, decreasing = FALSE)
+
+```
+
+
