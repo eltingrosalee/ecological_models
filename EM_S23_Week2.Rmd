@@ -93,5 +93,147 @@ hist(varfish)
 sort(varfish, decreasing = FALSE)
 
 ```
+# Week 2 - Day 2 
+### Plotting a Normal Distribution 
+Moments are the parameters 
+the moments in a normal are the parameter 
+
+```{r}
+#Given the following variables. Chose z as it centers around the moment, which in a normal distribution is mu
+mu <- 10 
+sig <- 5 
+z <- seq( from = -10, to = 30, by =1)
+
+norm <- dnorm(z, mu, sig)
+plot(z, norm, col = "darkblue", ylim = c(0, 0.1), type = "l")
+```
+### Poisson with probability 
+```{r}
+#making a poisson if we know a data point and the lambda
+pois <- dpois( x= 14, lambda = 20)
+```
+### Poisson with likelihood
+```{r}
+#plotting a likelihood with only one known point for several possible lambdas
+#assumes your data are Poisson distributed
+#searching across the parameters to see what is most likley 
+
+lambda <- seq(from = 1, to = 20, by =1)
+like <- dpois( x= 6, lambda = lambda)
+
+plot(lambda, like)
+```
+
+```{r}
+#the joint probability of drawing sample 1, sample 2 (6 and then 8)
+lambda <- seq(from = 1, to = 20, by =1)
+like6 <- dpois( x= 6, lambda = lambda)
+like8 <- dpois (x=8, lambda = lambda)
+
+prod <- like6*like8
+
+plot(lambda, like6, col= "red")
+plot(lambda, prod, col = "blue")
+
+```
+### Log likelihoods 
+generate 10 random data points from poisson
+lambda = 20 
+estimate hat-lambda using likelihood profile 
+loop through lambda 
+
+```{r}
+x<- rpois(n= 100, lambda = 20)
+lambda <- seq(from = 15, to = 25, by =.25)
+prob <- NA
+
+for (i in 1:length(lambda)) {
+  prob[i] <- sum(dpois(x = x, lambda= lambda[i], log=T))
+}
+
+#limit plot to be able to see the max and guesstimate the confidence intervals 
+plot(lambda, prob, xlim = c(18,22), ylim = c(-300, -280))
+```
+
+### Plotting Likelihoods with a known
+Generate random normal data 
+rnorm(10, mean =10, sd =3)
+estimate likelihood profile given that theta = 3 (which is the standard deviation; sigma; stdev)
+
+
+```{r}
+x <- rnorm(10, mean=10, sd =3)
+
+mu <- seq(1, 20, 1)
+sigma <- 3
+#sigma is variance
+prob <- NA
+
+for (i in 1:length(mu)) {
+  prob[i] <- sum(dnorm(x = x, mean = mu[i], sd= 3, log=T))
+}
+
+plot(mu, prob, ylim = c(-30, -20), xlim = c(7,15))
+```
+### Non Linear Minimization
+write a function to return the negative log likelihood of a poisson distribution 
+```{r}
+#making our own pois like function, later in the nln as the function to minimize
+
+# first try to get used to the function
+#works
+poislike <- function(data, lambda){
+ y<- -sum(dpois(x = x, lambda= lambda, log=T))
+}
+
+```
+```{r}
+#P is vector of parameters
+#yhat is lambda values 
+#this returns the negative log likelihood
+
+poislik <- function (P, data) { 
+  yhat <- P[1]
+  lik <- -sum(dpois(x= data, lambda = yhat, log=T))
+  return(lik)
+}
+
+#setting data 
+data <- rpois(n= 100, lambda = 20)
+#non linear minimization
+nlm(poislik, p = c(1), data =data)
+#we're interested in the estimate and minimum (which is of the negative minimum log likelihood)
+#can check by comparing $estimate from nlm and the mean(data), should be very close. 
+mean(data)
+```
+### Linear Likelihood 
+where:
+m =1 
+b = 5 
+sigma/sd = 3
+n=20
+x= seq(from = 6, to =25, by =1)
+
+```{r}
+# generate a random data set with these variables 
+set.seed(30)
+x <- seq(from = 6, to =25, by =1)
+e <- rnorm(n=20, mean=0, sd =3)
+y <- 1*x+5+e
+
+reglike <- function(P, y, x) { 
+    yhat <- P[1]*x +P[2]
+    lik <- -sum(dnorm(x=y, mean= yhat, sd = exp(P[3]), log=T))
+    return(lik)
+} 
+
+nlm(reglike, p = c(1,2,3), y, x)
+#returns the log of P[3]
+#so need to exponentiate the P[3] again from the above code. It is the third value in $estimate
+exp(1.0407128)
+
+plot(y)
+summary(lm(y~x))
+```
 
 
