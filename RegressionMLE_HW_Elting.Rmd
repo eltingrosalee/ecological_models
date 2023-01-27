@@ -1,0 +1,104 @@
+---
+title: "RegressionMLE_HW_Elting: Using Maximum Likelihood to Solve Regression Parameters"
+author: "Rosalee Elting"
+date: "`r Sys.Date()`"
+output: 
+  html_document: 
+    toc: true
+    toc_float: true
+    number_sections: true
+    theme: "cerulean"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Michaelis-Menten Non-Linear regression
+
+Here we will be using the non-linear Michaelis-Menten regression to complete our model. 
+$$ U = \frac {U{max}S}{K{s}+S}$$
+# Our Known Parameters
+
+Known Parameters: 
+
+$U{max}$ =1\
+$K{s}$ = 50\
+$\sigma$ = 0.05\
+$n$=20\
+
+# Creating the Model 
+## Generating fake data
+
+Generate fake data , assuming normally distributed errors 
+*here I am generating fake data, that is normally distribute to represent my x and y values*
+First I'm inputting my known values from above into R
+```{r}
+umax <- 1
+ks <- 50 
+sig <- 0.05
+```
+
+```{r}
+# I want my variable S in the Michaelis-Menten formula to go from 5 to 100. 
+set.seed(40)
+#making a range of values that s could be pulled from. 
+range <- seq(from=5, to =100, by =1)
+#taking a subset of x values for s, 
+s <- sample(x= range, size =20)
+#making a random variable, e, to represent error points of this normal distributed data set. 
+e <- rnorm(n=20, mean=0, sd =0.05)
+#now inputting the M-M formula to produce u values from these s values 
+u <- (umax*s/(ks+s))+e
+#Plotting my fake data that follows a M-M curve. 
+plot(s,u)
+```
+
+# Creating a function to report likelihood 
+I will now create a function to report the likelihood of the parameters, given the data I created in the above chunk using M-M formula and randomly distributed samples.
+*I do this first by creating a function*
+
+```{r}
+mmlike <- function(P, u, s) { 
+  uhat <- P[1]*s /(P[2]+s)
+  like <- -sum(dnorm(x=u, mean = uhat, sd = P[3], log =T))
+  return(like)
+}
+#P[1] equals Umax, P[2] equals Ks and P[3] equals the given sigma standard deviation
+```
+
+# Searching for the best parameters 
+Here I use the nlm (non linear minimization) function to estimate the best value of my parameters that will minimize the negative log likelihood of several parameters at one time. I use the mmlike function I made in the previous chunk as the function_to_minimize, one of the arguments in the nlm function.  
+```{r, warning=FALSE}
+mmout <- nlm(mmlike, p= c(1,2,3), u, s)
+mmout
+
+#P[3] is still in log format, so it must be exponentiation: 
+#exp(-2.8722265)
+```
+**This returns the following parameter estimates:** \
+$U{max}$ = 0.8646424 \
+$K{s}$ = 38.6109660 \
+$\sigma$ = 0.05657293\
+
+# Comparing with a pre-made regression routine
+Now I'll compare my estimates with the mathematical solution that can be produced with just a summary using a regression model with the two variables in R.  
+```{r}
+#summary()
+```
+
+# Plot model fit on the data 
+Now plotting how our model fits the data I generated early in this assignment. 
+```{r}
+#making a line for my Michaelis-Menten model 
+mmm <- 0.865*range/(38.61+range)
+plot(range, mmm, type ='l', lwd = 3, col = "darkblue")
+points(s,u)
+
+```
+
+
+
+
+
