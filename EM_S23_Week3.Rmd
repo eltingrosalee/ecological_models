@@ -1,0 +1,183 @@
+---
+title: "EM_S23_Week3"
+author: "Rosalee Elting"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+### Zooplankton Posterior Example
+1. generate data of zooplankton; 6 samples; poisson distribution. 
+rpois(6, 20)
+20 is true value of lambda
+
+2. prior experiments (x3)
+experiment 1: mu = 20; var = 50 
+experiment 2: mu = 10; var =3
+experiment 3: mu = 30; var = 10
+
+3. Reparameterize
+my prior distribution is gamma, take inputs of alpha and beta. We only have mu and var though. 
+We need to re-parameterize gamma, using moment magic. 
+mu = alpha/beta 
+var = (alpha/beta)^2
+Doing the algebra of this: 
+alpha = mu^2/var
+beta= mu / var
+
+3. calculate alpha and beta for each prior
+
+4. Plot posterior in red; prior in black for each  
+gamma distribution- give it alpha and beta posteriors 
+sample size is 6 
+
+
+```{r}
+#generate data set 
+zoo <- rpois(100, 20)
+lambda <- seq(from = 0, to = 40, by = 1)
+
+
+#PRIOR 1
+#make a summary of my prior variables, first is alpha prior, second is beta prior
+prior1 <- c(8,0.4)
+#create new data frame for posterior alpha and beta 
+posterior1 <- NA
+#compute the alpha posteriors which = sum(yi) + alpha prior
+posterior1[1] <- sum(zoo) + prior1[1]
+#compute the beta posteriors which = n + beta prior
+posterior1[2] <- length(zoo) + prior1[2]
+
+#now generate a gamma distribution with the lambda values I made a sequence of, the shape is alpha and rate is beta (both prior)
+dpriorgamma1 <- dgamma(x=lambda, shape = prior1[1], rate = prior1[2])
+#now generate a gamma distribution with the same lambda values, but where the shape and rate are the alpha and beta posterior. 
+dpostgamma1 <- dgamma(x =lambda, shape = posterior1[1], rate = posterior1[2])
+
+#PRIOR 2 
+prior2 <- c(33.3, 3.33)
+
+posterior2 <- NA
+posterior2[1] <- sum(zoo) + prior2[1]
+posterior2[2] <- length(zoo) + prior2[2]
+
+dpriorgamma2 <- dgamma(lambda, prior2[1], prior2[2])
+dpostgamma2 <- dgamma(lambda, posterior2[1], posterior2[2])
+
+#PRIOR 3 
+prior3 <- c(90,3)
+
+posterior3 <- NA
+posterior3[1] <- sum(zoo) + prior3[1]
+posterior3[2] <- length(zoo) + prior3[2]
+
+dpriorgamma3 <- dgamma(lambda, prior3[1], prior3[2])
+dpostgamma3 <- dgamma(lambda, posterior3[1], posterior3[2])
+
+plot(dpriorgamma1 ~lambda, type = "l", ylim = c(0,.8))
+lines(dpostgamma1~lambda, col= "red")
+
+plot(dpriorgamma2 ~lambda, type = "l", ylim = c(0,.8))
+points(dpostgamma2 ~lambda, col= "red", type = 'l')
+
+plot(dpriorgamma3~lambda, type = "l", ylim = c(0,.8))
+points(dpostgamma3~lambda, col= "red", type = 'l')
+
+#the more data you collect, the more it will shift to the likelihood than the prior. 
+#the effect of the prior goes away if you use likelihood heavily. 
+
+```
+
+# Week 3 - Day 2
+### Function for Posterior Probability 
+```{r}
+poispost <- function(P, alphaprior, betaprior, y) {
+	yhat <- P[1] 
+	#sum is positive here, we're maximizing the log likelihood
+	post <- sum(dpois(y, yhat, log=TRUE))+ dgamma(yhat, alphaprior, betaprior, log=TRUE)
+	return(post)
+}
+```
+
+### The priors we are using, which can easily change and the alphaprior and betaprior are standardized formulas  
+```{r}
+mu <- 20 
+v <- 50 
+#need to make into our parameters with moment matching
+alphaprior <- mu^2/v
+betaprior <- mu/v
+```
+
+### Testing running the function with some sample data to make sure the fucntion works. 
+```{r}
+y <- c(20,19)
+P = 18
+
+poispost(P, alphaprior, betaprior, y=y)
+# this result is proportional to the probability, but it's not EQUAL to it, we need a normalization constant to change from proportional to equal to probability. 
+#expected value here is -7.77
+```
+### The data we will use is defined here
+```{r}
+#the data set we're working with from now on 
+y <- rpois(6,20)
+```
+
+#Running our own MCMC chain
+```{r}
+#make a matrix, called chain, to store our parameters in. we're taking 10000 steps, and we're using 1 column for the lambda, but can make larger later. 
+chain <- matrix(nrow= 10000, ncol= 1)
+#don't worrry about the size of the scale, we'll adapt later.
+scale <- 5
+#start the parameter estimate somewhere, here we start it at 1. 
+chain[1,] <- c(1)
+
+for(i in 2:nrow(chain)) {
+	positive <- F
+	while(positive==F){
+	pstar <- rnorm(1, chain[i-1,], scale)
+	positive <- ifelse(pstar >1, T, F)}
+	poststar <- poispost(pstar, y=y, alphaprior=alphaprior, betaprior=betaprior)
+	postchain <- poispost(chain[i-1], y=y, alphaprior=alphaprior, betaprior=betaprior)
+	R <- exp(poststar - postchain)
+	rprob <- runif(1)
+	chain[i,] <- ifelse(R > rprob, pstar, chain[i-1]) 
+}
+
+#while loop only for Poisson 
+```
+### Checking acceptance and plotting
+```{r}
+#and we calculate acceptance. If we accept none, it's a bad estimate we started with, if we accept them all, we're taking too small of steps. We aim for 0.2. 
+
+acceptance <- 1- mean(duplicated(chain[,1]))
+print(acceptance)
+
+#then we'll plot it 
+plot(chain[,1], type = "l")
+
+#plotting the posterior probability density; the integral of this is 1. 
+hist(chain[,1])
+#or
+plot(density(chain[,1]))
+```
+### Reporting some stats on this model 
+```{r}
+median(chain[,1])
+mean(chain[,1])
+var(chain[,1])
+quantile(chain[,1], c(.025, 0.5, 0.975))
+
+#the difference between the .025 and 0.975 is our 95% uncertainty interval or 95% credible interval. 
+# we're 95% confident that the true lambda of our data is between those two values. 
+```
+### Comparing with just the priors and posteriors from our actual data's mu and var
+```{r}
+#mu = alpha/beta
+#var = alpha/beta^2
+qgamma(0.025, 122, 6.4)
+qgamma(0.975, 122, 6.4)
+# the approximation will never match perfectly. 
+```
+
