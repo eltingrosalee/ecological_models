@@ -19,9 +19,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Here we will be using the non-linear Michaelis-Menten regression to complete our model. 
 $$ U = \frac {U{max}S}{K{s}+S}$$
-# Our Known Parameters
 
-Known Parameters: 
+# Our Known Parameters
 
 $U{max}$ =1\
 $K{s}$ = 50\
@@ -62,7 +61,7 @@ I will now create a function to report the likelihood of the parameters, given t
 ```{r}
 mmlike <- function(P, u, s) { 
   uhat <- P[1]*s /(P[2]+s)
-  like <- -sum(dnorm(x=u, mean = uhat, sd = P[3], log =T))
+  like <- -sum(dnorm(x=u, mean = uhat, sd = exp(P[3]), log =T))
   return(like)
 }
 #P[1] equals Umax, P[2] equals Ks and P[3] equals the given sigma standard deviation
@@ -75,18 +74,12 @@ mmout <- nlm(mmlike, p= c(1,2,3), u, s)
 mmout
 
 #P[3] is still in log format, so it must be exponentiation: 
-#exp(-2.8722265)
+print(exp(-2.8722265))
 ```
 **This returns the following parameter estimates:** \
 $U{max}$ = 0.8646424 \
 $K{s}$ = 38.6109660 \
-$\sigma$ = 0.05657293\
-
-# Comparing with a pre-made regression routine
-Now I'll compare my estimates with the mathematical solution that can be produced with just a summary using a regression model with the two variables in R.  
-```{r}
-#summary()
-```
+$\sigma$ = 0.05657283\
 
 # Plot model fit on the data 
 Now plotting how our model fits the data I generated early in this assignment. 
