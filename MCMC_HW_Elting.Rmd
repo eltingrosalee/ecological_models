@@ -1,0 +1,210 @@
+---
+title: "MCMC_HW_Elting"
+author: "Rosalee Elting"
+date: "`r Sys.Date()`"
+output: 
+  html_document: 
+    toc: true
+    toc_float: true
+    number_sections: true
+    theme: "cerulean"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Generating Fake Data 
+```{r}
+# I want my data points to range from 5 to 100. 
+set.seed(100)
+#making a range of values that x could be pulled from. 
+range <- seq(from=5, to =100, by =1)
+#taking a subset of range values for x
+x <- sample(x= range, size =20)
+#variables of the regression of my fake data
+slope <- 1
+intercept <- 5
+#assigning y values for these x's
+y <- intercept + slope*x + rnorm(n=20, mean =0, sd =1)
+plot(x,y)
+
+```
+
+# Create a Function for Posterior Probability of a Linear Regression 
+P[1] equals intecept, P[2] is slope and P[3] is error term
+```{r}
+regpost <- function(P, x, y) {
+	yhat <- P[1] + P[2] *x
+	prior <-  sum(dnorm(P[1], mean =0, sd=10, log=TRUE),
+	          dnorm(P[2], mean=0, sd=10, log=TRUE),
+	          dnorm(P[3], mean=0, sd=1, log=TRUE))
+		#sum is positive here, we're maximizing the log likelihood
+	like <-  sum(dnorm(y, mean = yhat, sd = exp(P[3]), log= TRUE))
+	post <- like+prior
+	return(post)
+}
+
+```
+
+# Testing my Function with my faked data as test of function before proceeding
+```{r}
+P = c(3,1,1)
+prob <- regpost(P= P, x=x, y=y)
+print(prob)
+```
+This produced a negative number that is proportional to the probability, not the true probability.
+
+# Running a MCMC code
+I am running this code with a chain of 10,000 iterations of the loop, making estimates for all three of the parameters in my linear regression. \
+**A few notes:**\ 
+<li>I'm making a matrix, called chain, that will take 10000 steps with three columns for intercept, slope and error parameters, respectively.</li>
+<li>I set the width of each step (scale) to 0.05. I modified this so that the acceptance of each step of the chain is between 0.2 and 0.4. </li>
+<li>I assign the first rows of chain as all zeros, giving the loop one set of values to start with. </li>
+<li> I create a single starting normally distributed value for each parameter, using the previous chain value for that paramerer as the mean, and the scale as a standard deviation. These are called intercept, slope and error and all represent **Pstar** for that parameter</li> 
+<li> I then calculate the probability given my data, or [theta | y] using my regpost function, with the above pstar for each parameter as input. this is the poststar line.</li> 
+<li> I then calculate the probability of [y | theta ] based on the previous estimate in chain and my data. this is called postchain. </li> 
+<li> I then compare the ratio of my proposed parameter values (poststar) and the previous values in the chain (postchain). I compare these with a number from a random uniform distribution.</li> 
+<li>Here I test for this row in a chain, for every parameter, if my ratio of proposed-previous parameters are greater or less than the rprob I got in the Monte Carlo step. If the ratio is larger, I accept my pstar estiamte for each parameter, if it isn't I paste the last value from the chain. </li> 
+
+```{r}
+steps <- 10000
+scale <- 0.05
+
+chain <- matrix(nrow = steps, ncol= 3)
+
+chain[1,] <- c(0, 0, 0)
+
+for (i in 2: length(chain[,1])) {
+ 
+  intercept <- rnorm(n = 1, mean = chain[i-1,1], sd= scale) 
+  slope <- rnorm(n = 1, mean = chain[i-1,2], sd= scale) 
+  error <- rnorm(n = 1, mean = chain[i-1,3], sd= scale) 
+  params <- c(intercept, slope, error)
+  
+	poststar <- regpost(P = params, x, y)
+	
+	postchain <- regpost(P = chain[i-1,], x, y)
+
+	R <- exp(poststar - postchain)
+
+	Rprob <- runif(1)
+
+	chain[i,] <- if (R < Rprob){chain[i-1,]} else{c(intercept, slope, error)}
+
+}
+```
+
+
+# Acceptance and Plotting
+Here I report the acceptance rates for my parameters (the values are all the same, since I accept or reject row-wise). Depending on the reporting of these acceptance rates, I could change scale if needed to make sure that acceptance is between 0.2 and 0.4. 
+```{r}
+#reporting acceptance for each column individually 
+intercept_acceptance <- 1- mean(duplicated(chain[,1]))
+slope_acceptance <- 1- mean(duplicated(chain[,2]))
+error_acceptance <- 1- mean(duplicated(chain[,3]))
+                            
+#printing these acceptance rates
+print(intercept_acceptance)
+print(slope_acceptance)
+print(error_acceptance)
+```
+
+
+# Plot Chain Output of all thee parameters individually
+```{r}
+#plotting all parameters from the model; ommitting burn in
+par(mfrow=c(3,1))
+plot(chain[-c(1:1000),1], type='l')
+plot(chain[-c(1:1000),2], type='l')
+plot(chain[-c(1:1000),3], type='l')
+```
+
+# Plot the marginal distribution of the intercept and slope 
+Here I will plot the marginal distribution of each parameter, as well as utilize quantile estimates to produce 95% credible interval of the slope and intercept parameters. 
+```{r}
+plot(density(chain[,1]))
+plot(density(chain[,2]))
+plot(density(chain[,3]))
+
+intercept_95_cred <- NA
+intercept_95_cred <- c(quantile(chain[,1], c(0.025)), quantile(chain[,1], c(0.975)))
+slope_95_cred <- NA
+slope_95_cred <- c(quantile(chain[,2], c(0.025)) , quantile(chain[,2], c(0.975)))
+
+print(intercept_95_cred)
+print(slope_95_cred)
+```
+# Plot the joint distribution of the intercept and slope
+Plotting the intercept as x, and slope as y post burn-in
+```{r}
+plot(x= chain[-c(1:1000),1], y= chain[-c(1:1000),2])
+```
+# Comparing with Canned Function
+Using the linear model estimates from R to see how my estimates from MCMC compare with R's. 
+```{r}
+canned <- lm(y~x)
+summary(canned)
+```
+
+
+# Calculate a T-based confidence interval
+Calculating for the slope of the canned solution, "canned"
+```{r}
+confint(canned, 'x' , level= 0.95)
+```
+
+
+# Mess with Priors
+I am making a second function with different priors 
+```{r}
+#changing all priors to have a sd of 1
+priortest <- function(P, x, y) {
+	yhat <- P[1] + P[2] *x
+	prior <-  sum(dnorm(P[1], mean =0, sd=1, log=TRUE),
+	          dnorm(P[2], mean=0, sd=1, log=TRUE),
+	          dnorm(P[3], mean=0, sd=1, log=TRUE))
+		#sum is positive here, we're maximizing the log likelihood
+	like <-  sum(dnorm(y, mean = yhat, sd = exp(P[3]), log= TRUE))
+	post <- like+prior
+	return(post)
+}
+
+#P[1] equals intecept, P[2] is slope and P[3] is error term
+steps <- 10000
+scale <- 0.05
+
+chain2 <- matrix(nrow = steps, ncol= 3)
+
+chain2[1,] <- c(0, 0, 0)
+
+for (i in 2: length(chain2[,1])) {
+ 
+  intercept <- rnorm(n = 1, mean = chain2[i-1,1], sd= scale) 
+  slope <- rnorm(n = 1, mean = chain2[i-1,2], sd= scale) 
+  error <- rnorm(n = 1, mean = chain2[i-1,3], sd= scale) 
+  params <- c(intercept, slope, error)
+  
+	poststar <- priortest(P = params, x, y)
+	
+	postchain2 <- priortest(P = chain2[i-1,], x, y)
+
+	R <- exp(poststar - postchain2)
+
+	Rprob <- runif(1)
+
+	chain2[i,] <- if (R < Rprob){chain2[i-1,]} else{c(intercept, slope, error)}
+
+}
+intercept_acceptance_2 <- 1- mean(duplicated(chain2[,2]))
+print(intercept_acceptance_2)
+
+plot(chain2[-c(1:1000),2], type='l')
+plot(density(chain2[,2]))
+
+slope_95_cred_2 <- NA
+slope_95_cred_2 <- c(quantile(chain2[,2], c(0.025)) , quantile(chain2[,2], c(0.975)))
+
+print(slope_95_cred_2)
+```
+Modifying the priors made it that my slope estimate narrows and the MCMC acceptance rate lowers from 0.28 to 0.12. 
