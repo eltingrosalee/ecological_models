@@ -89,7 +89,7 @@ for (i in 2: length(chain[,1])) {
 	R <- exp(poststar - postchain)
 
 	Rprob <- runif(1)
-
+#don't use ifelse() here! It will break it. 
 	chain[i,] <- if (R < Rprob){chain[i-1,]} else{c(intercept, slope, error)}
 
 }
@@ -111,7 +111,7 @@ print(error_acceptance)
 ```
 
 
-# Plot Chain Output of all thee parameters individually
+# Plot Chain Output of all three parameters individually
 ```{r}
 #plotting all parameters from the model; ommitting burn in
 par(mfrow=c(3,1))
