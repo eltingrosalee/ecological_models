@@ -1,0 +1,305 @@
+---
+title: "Multilivel_Models_HW_Elting"
+author: "Rosalee Elting"
+date: "`r Sys.Date()`"
+output: 
+  html_document: 
+    toc: true
+    toc_float: true
+    number_sections: true
+    theme: "cerulean"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Multilevel Model Introduction 
+For this exercise we are using a multilevel model. These models are used when there is some form of repition (e.g., within an individual) or this experiment is replicated in the same way across multiple plots within a given site, but the work extends to multiple sites. Ultimately, with these type of models, we are often using statistics from one level as a response variable in the next level up. This type of data has to be accounted for in the model. 
+
+# Grassland Example
+For our example, we are studying biomass of Montana grasslands. This is done at 8 sites where conditions are expected to differ and have effects on biomass. Within each site, there are 6 plots, therefore a multilevel model is appropriate to represent our data. \
+
+Our model will use the following relationship: 
+$$B_{i,j} = B_j + \epsilon_{i,j}$$ 
+where: 
+$$\epsilon_j \sim normal(0, \sigma_{site})$$
+In words this says: the grass biomass for the whole study (plots are $i$ and sites are $j$) are a result of the average biomass from each site ($B_j$) with normally distributed error. 
+
+The prior probability for mean site biomass is represented as: 
+$$ B_{j} = B_{mean} + e_{j}$$
+
+## Load Libraries
+
+```{r}
+library(tidyverse)
+library(rstan)
+library(tidybayes)
+```
+
+# Making Data Set 
+We are given the overall mean $B_{i,j}$. We are also given the site and plot variance temrs ($\sigma^2$). This chunk gives the data we have. 
+```{r}
+#given data
+set.seed(40)
+sigma_site <- 50 
+sigma_plot <- 50 
+n_site <- 8 
+n_plot <- 6
+
+b_mean <- 400
+```
+
+
+Next, we generate means for each site, using the overall mean and the site variance. Then we generate values for each plot using the site means we just generated, and the plot variance. Here I also plot these plot means for each site. 
+```{r}
+#making site means using overall mean. 
+site_mean <- rep(b_mean, n_site) + rnorm(n_site, 0, sigma_site)
+#making data points using plot means
+plot_mean <- rep(site_mean, each = n_plot) + rnorm(n_plot*n_site, 0, sigma_plot)
+
+fake_data <- data.frame(
+              site = rep(1:8, each = n_plot), 
+              b_ij = plot_mean)
+#testing to see if the overall mean matches the one given (400). It is not exact but reasonably close. 
+mean(fake_data$b_ij[fake_data$site==6])
+#plotting based on site
+plot(x= fake_data$site, y = fake_data$b_ij, pch = 16, col="#FF6699", xlab= "Site", ylab= "Biomass")
+
+```
+
+# Creating a Model in Stan 
+The following chunk is simply printing the Stan model that I created as a Stan file called "biomassex.stan". All the text is commented out to prevent this markdown file actually running it. 
+```{r}
+# data { 
+#   int<lower=0> N; 
+#   int<lower=0> N_site;
+#   vector<lower=0>  [N] y; 
+#   int<lower=0>  site_id [N]; 
+# }
+#   
+# parameters { 
+#   vector<lower=0> [N_site] mu_site; //site level mean, length of 8 
+#   real<lower=0> sigma_plot; 
+#   real<lower=0>  sigma_site; 
+#   real<lower=0>  mu; //group level mean  
+# }
+#   
+#   model { 
+#     for( i in 1: N){
+#       y[i] ~ normal(mu_site[site_id[i]], sigma_plot);
+# }
+#     mu_site ~ normal(mu, sigma_site);
+#     //now prior distribtuions for the parameters 
+#     mu ~ gamma(1, 0.001);
+#     sigma_plot ~ normal(0,100); 
+#     sigma_site ~ normal(0,100);
+# } 
+# 
+```
+
+
+# Running the Stan Model 
+```{r}
+biomass_data <- list(N= nrow(fake_data), N_site = as.integer(n_site), y= as.numeric(fake_data$b_ij), site_id= fake_data$site)
+
+biomass_fit <- stan(file = "biomassex.stan", data = biomass_data, iter = 1000, chains= 4)
+print(biomass_fit)
+```
+
+# Visualizations of the Model 
+## Visualization 1
+```{r}
+biomass_fit_summ<- summary(biomass_fit)
+
+biomass_data <- data.frame(biomass_data)
+
+mean_calc<- biomass_data %>%
+  group_by(site_id) %>%
+  summarise(meanB=mean(y), se=sd(y)/sqrt(6))
+
+steps<- biomass_fit %>% 
+  spread_draws(mu_site[site_id])
+  
+
+ggplot(steps, aes(x=as.factor(site_id), y=mu_site)) + 
+  geom_violin()+
+  geom_boxplot(width=0.1, color="grey", alpha=0.2) +
+  geom_point(data=biomass_data, mapping = aes(x=as.factor(site_id), y=y ),  position = position_jitter(seed = 1, width = 0.2))+
+  geom_point(data=mean_calc, mapping = aes(x=as.factor(site_id), y=meanB), color= "#FF6699")+
+  xlab("site")+
+  ylab("bioamss")+
+  labs(title = "Partial Pooling")+
+  theme_classic()
+```
+
+*In this visualization, there are violin plots that illustrate mean biomass values for each site based on out model. The boxplots represent quartile data for our model fit as well. The black points in this represent the biomass for each individual plot at each site. Pink points illustrate the mean biomass calculated from our fake data for each site. Therefore points are our manufactured data and their means, while density plots (violin and box) illustrate the results of our model. In this example, the means of our data match our model means relatively well* 
+
+## Visualization 2
+Here is another helpful illustration: 
+```{r}
+ggplot(steps, aes(x=as.factor(site_id), y=mu_site )) + 
+  
+  geom_boxplot(width=0.1, color="grey", alpha=0.5, outlier.shape = NA) +
+  #geom_point(data=B, mapping = aes(x=as.factor(site), y=B_ij ),  position = position_jitter(seed = 1, width = 0.2))+
+  geom_point(data=mean_calc, mapping = aes(x=as.factor(site_id), y=meanB), color="#FF6699")+
+   geom_point(data=mean_calc, mapping = aes(x=as.factor(site_id), y=meanB+2.3*se), color="#FF6699")+
+   geom_point(data=mean_calc, mapping = aes(x=as.factor(site_id), y=meanB-2.3*se), color="#FF6699")+
+  xlab("Site")+
+  ylab("Biomass")+
+  labs(title = "Partial Pooling")+
+  theme_classic()
+```
+
+*This visualization is showing the fit of our model as boxplots. layered upon this are points from our data set. These represent means and also points that are 2.3 standard errors above or below the mean (a t-based confidence interval). This illustration of data represents how our pooling can affect our model's fitness. You can see in this example, the model often underestimates the variance (the t-based CI are wider than the whiskers of the boxplot). Possibly, more importantly, the model often pulls the mean value away from the **real mean of our data**. This is likely reflecting the mean being pulled towards the real mean of grassland biomass for all of Montana $B_{Montana}$. The above examples are illustrating partial pooling, where we are not assuming every plot at every site is identical (complete pooling), nor are we assuming that each plot at each site are fully independent (no pooling). Below I illustrate how difference in site and plot variance influence this pooling.* 
+
+# Changing Model Pooling 
+What if our we are making assumptions about the relatedness of each plot at each site? Here I outline some examples if our pooling is complete of no pooling occurs, based on the measured variance of our data. 
+
+## Complete Pooling 
+With a complete pooling scenario, we assume that each unit in the study is behaving the same. This would be seen as very little variance between different sites, though the plot variance may be held the same. This means the variance seen in the data set may occur across the plots, but the sites should have little effect and therefore a low variance. 
+
+**For this example we will run all the same code, but with the $\sigma_{site} = 5$ (low difference between sites) and the $\sigma_{plot} = 50$ (unchanged from previous example)**
+```{r}
+#Making data set 
+set.seed(40)
+sigma_site <- 5 
+sigma_plot <- 50 
+n_site <- 8 
+n_plot <- 6
+
+b_mean <- 400
+
+site_mean <- rep(b_mean, n_site) + rnorm(n_site, 0, sigma_site)
+#making data points using plot means
+plot_mean <- rep(site_mean, each = n_plot) + rnorm(n_plot*n_site, 0, sigma_plot)
+
+fake_data <- data.frame(
+              site = rep(1:8, each = n_plot), 
+              b_ij = plot_mean)
+#testing to see if the overall mean matches the one given (400). It is not exact but reasonably close. 
+mean(fake_data$b_ij[fake_data$site==6])
+#plotting based on site
+plot(x= fake_data$site, y = fake_data$b_ij, pch = 16, col = "#3399FF", xlab= "Site", ylab= "Biomass")
+
+#Run Stan Model
+biomass_data <- list(N= nrow(fake_data), N_site = as.integer(n_site), y= as.numeric(fake_data$b_ij), site_id= fake_data$site)
+
+biomass_fit <- stan(file = "biomassex.stan", data = biomass_data, iter = 1000, chains= 4)
+print(biomass_fit)
+```
+
+### Visualization 1
+```{r}
+biomass_fit_summ<- summary(biomass_fit)
+
+biomass_data <- data.frame(biomass_data)
+
+mean_calc<- biomass_data %>%
+  group_by(site_id) %>%
+  summarise(meanB=mean(y), se=sd(y)/sqrt(6))
+
+steps<- biomass_fit %>% 
+  spread_draws(mu_site[site_id])
+  
+
+ggplot(steps, aes(x=as.factor(site_id), y=mu_site)) + 
+  geom_violin()+
+  geom_boxplot(width=0.1, color="grey", alpha=0.2) +
+  geom_point(data=biomass_data, mapping = aes(x=as.factor(site_id), y=y ),  position = position_jitter(seed = 1, width = 0.2))+
+  geom_point(data=mean_calc, mapping = aes(x=as.factor(site_id), y=meanB), color= "#3399FF")+
+  xlab("Site")+
+  ylab("Bioamss")+
+  labs(title = "Complete Pooling")+
+  theme_classic()
+```
+
+### Visualization 2
+```{r}
+ggplot(steps, aes(x=as.factor(site_id), y=mu_site )) + 
+  
+  geom_boxplot(width=0.1, color="grey", alpha=0.5, outlier.shape = NA) +
+  #geom_point(data=B, mapping = aes(x=as.factor(site), y=B_ij ),  position = position_jitter(seed = 1, width = 0.2))+
+  geom_point(data=mean_calc, mapping = aes(x=as.factor(site_id), y=meanB), color="#3399FF")+
+   geom_point(data=mean_calc, mapping = aes(x=as.factor(site_id), y=meanB+2.3*se), color="#3399FF")+
+   geom_point(data=mean_calc, mapping = aes(x=as.factor(site_id), y=meanB-2.3*se), color="#3399FF")+
+  xlab("Site")+
+  ylab("Biomass")+
+  labs(title = "Complete Pooling")+
+  theme_classic()
+```
+
+*In this example, we see much more variation within a plot, than the variance between sites. In some cases, the actual data is quite more variable than the model estimates. In these scenario, the model keeps pulling the mean to the given global Biomass mean of 400 from our data set, seemingly regardless of how the site mean (center point) is behaving * 
+
+## No Pooling
+Now we will play out a scenario where we have no pooling. This would mean that we expect sites to respond independently and have greater variance. In such a situation, that also means that the plots are expected to be far more similar and have lower variance. **In this scenario we are exploring $\sigma_{site} =50$ (greater variance between sites) and $\sigma_{plot} =5$ (much lower difference between plots). **
+```{r}
+#Making data set 
+set.seed(40)
+sigma_site <- 50 
+sigma_plot <- 5 
+n_site <- 8 
+n_plot <- 6
+
+b_mean <- 400
+
+site_mean <- rep(b_mean, n_site) + rnorm(n_site, 0, sigma_site)
+#making data points using plot means
+plot_mean <- rep(site_mean, each = n_plot) + rnorm(n_plot*n_site, 0, sigma_plot)
+
+fake_data <- data.frame(
+              site = rep(1:8, each = n_plot), 
+              b_ij = plot_mean)
+#testing to see if the overall mean matches the one given (400). It is not exact but reasonably close. 
+mean(fake_data$b_ij[fake_data$site==6])
+#plotting based on site
+plot(x= fake_data$site, y = fake_data$b_ij, pch = 16, col = "#FF3300", xlab= "Site", ylab= "Biomass")
+
+#Run Stan Model
+biomass_data <- list(N= nrow(fake_data), N_site = as.integer(n_site), y= as.numeric(fake_data$b_ij), site_id= fake_data$site)
+
+biomass_fit <- stan(file = "biomassex.stan", data = biomass_data, iter = 1000, chains= 4)
+print(biomass_fit)
+```
+### Visualization 1
+```{r}
+biomass_fit_summ<- summary(biomass_fit)
+
+biomass_data <- data.frame(biomass_data)
+
+mean_calc<- biomass_data %>%
+  group_by(site_id) %>%
+  summarise(meanB=mean(y), se=sd(y)/sqrt(6))
+
+steps<- biomass_fit %>% 
+  spread_draws(mu_site[site_id])
+  
+
+ggplot(steps, aes(x=as.factor(site_id), y=mu_site)) + 
+  geom_violin()+
+  geom_boxplot(width=1, color="grey", alpha=0.2) +
+  geom_point(data=biomass_data, mapping = aes(x=as.factor(site_id), y=y ),  position = position_jitter(seed = 1, width = 0.1))+
+  geom_point(data=mean_calc, mapping = aes(x=as.factor(site_id), y=meanB), color= "#FF3300")+
+  xlab("Site")+
+  ylab("Bioamss")+
+  labs(title = "No Pooling")+
+  theme_classic()+
+  facet_wrap(.~site_id, nrow = 2)
+```
+
+### Visualization 2
+```{r}
+ggplot(steps, aes(x=as.factor(site_id), y=mu_site )) + 
+  
+  geom_boxplot(width=0.1, color="grey", alpha=0.5, outlier.shape = NA) +
+  #geom_point(data=B, mapping = aes(x=as.factor(site), y=B_ij ),  position = position_jitter(seed = 1, width = 0.2))+
+  geom_point(data=mean_calc, mapping = aes(x=as.factor(site_id), y=meanB), color="#FF3300")+
+   geom_point(data=mean_calc, mapping = aes(x=as.factor(site_id), y=meanB+2.3*se), color="#FF3300")+
+   geom_point(data=mean_calc, mapping = aes(x=as.factor(site_id), y=meanB-2.3*se), color="#FF3300")+
+  xlab("Site")+
+  ylab("Biomass")+
+  labs(title = "No Pooling")+
+  theme_classic()
+```
+
+*In this example, our variance between sites is far larger than the variance between plots. In each estimate, the model (boxplots) nearly perfectly estaimtes fro that site, but doesn't necessarily seem to be "pulling" towards the true mean of 400.* 
