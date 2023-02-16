@@ -1,0 +1,69 @@
+---
+title: "EM_S23_Week5"
+author: "Rosalee Elting"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Week 5 - Day 1
+
+## Biomass example
+
+```{r}
+library(tidyverse)
+library(MetBrewer)
+library(rstan)
+
+sigma_site <- 50
+sigma_plot <- 50 
+n_site <- 8
+n_plot <- 6
+beta0_mean <- 400 
+beta1 <- 200
+#going to need another column in df called nit, that is repeat of 0 0 0 1 1 1 at each site. 
+```
+
+```{r}
+biomass <- data.frame(
+  site = rep(1:8, each = n_plot),
+  plot = rep(1:6),
+  nit = rep(c(rep(0, n_plot/2), rep(1, n_plot/2)), n_site),
+  b_ij = NA
+)
+#Bij = Beta0,j + Beta1* Nit
+
+
+#making site means using overall mean. 
+site_mean <- rep(beta0_mean, n_site) + rnorm(n_site, 0, sigma_site)
+#making data points using plot means
+plot_mean <- rep(site_mean, each = n_plot) + rnorm(n_plot*n_site, 0, sigma_plot)
+
+biomass$b_ij <- plot_mean + beta1*biomass$nit
+
+#testing to see if it matches 
+mean(biomass$b_ij[biomass$nit==1])
+mean(biomass$b_ij[biomass$nit==0])
+
+#plotting based on site
+ggplot(biomass, aes(x=as.factor(nit), y = b_ij, col= as.factor(nit)))+ 
+  geom_point()+
+  facet_wrap(~as.factor(site))+
+  theme_classic()
+
+```
+
+# Running Stan Code 
+```{r}
+library(rstan)
+
+biomass_data <- list(n= nrow(biomass), n_site = as.integer(n_site), y= as.numeric(biomass$b_ij), site_id= biomass$site, nit = biomass$nit)
+
+biomass_fit <- stan(file = "biomass_wnit.stan", data = biomass_data, iter = 1000, chains= 4)
+print(biomass_fit)
+```
+
+

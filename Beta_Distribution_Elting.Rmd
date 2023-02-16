@@ -1,0 +1,96 @@
+---
+title: "Beta_Distribution_Elting"
+author: "Rosalee Elting"
+date: "`r Sys.Date()`"
+output: 
+  html_document: 
+    toc: true
+    toc_float: true
+    number_sections: true
+    theme: "cerulean"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Definition 
+The beta distribution is used for modeling continuous variables that can be expressed as a proportion. Therefore, it takes values from 0 to 1. The data must be bounded between 0 and 1 and this distribution does not take negative values. 
+the beta distribution is often used as a conjugate prior probability in Bayes for the following distributions: binomial, negative binomial, geometric and Bernoulli. 
+This distribution is highly helpful for modeling the stochastic effects of random variables as a proportion. It is further helpful when plotting proportions that are binomial or have skew. 
+
+## Parameters 
+The beta distribution takes two parameters
+The parameters of a beta distribution are both continuous and positive. 
+These parameters are denoted as: $\alpha ,\beta$ 
+
+# Plot 
+Here I plot some different values for $\alpha$ $\beta$ and will plot them below (titled by scenario in table)
+
+```{r table2, echo=FALSE, message=FALSE, warnings=FALSE, results='asis'}
+tabl <- "
+| Scenario       | alpha        | beta  | Feature |
+|-----|:-------------:|------:| ---------:|
+| 1     | 1 |1 | represents uniform dsitribution |
+| 2     | 2 | 2    | Bimodal |
+| 3 |  0.2   |    0.2 | approaches Bernoulli |
+|4 | 2 | 4 | tail skewed |
+"
+cat(tabl)
+```
+
+
+```{r}
+x <- seq(from =0, to =1, by =0.05)
+plot(x, dbeta(x, 1, 1), col = "mediumspringgreen", type = "l", ylab = "Density", xlab = "Probability", ylim = c(0,2.5), lwd =5)
+lines(x, dbeta(x, 2,2), col = "lightslateblue", lwd =5)
+lines(x, dbeta(x, 0.2, 0.2), col = "tomato3", lwd=5)
+lines(x, dbeta(x, 2,4), col = "mediumpurple4", lwd=5)
+
+
+legend("topright",
+       box.lwd = 2 , title="LEGEND",
+       legend=c("Scenario1", "Scenario2","Scenario3" , "Scenario4"),
+       fill = c("mediumspringgreen","lightslateblue", "tomato3", "mediumpurple4"))
+```
+
+# Mathematical Definition
+ The mathematical definition for the probability function is: 
+ $$[y | \theta] = \frac{1-y ^{\beta-1}y^{\alpha-1}}{B(\alpha, \beta)}$$
+ 
+ 
+B is a normalizing constant, to ensure the total probability is equal to 1.  Therefore we can rewrite this as: 
+
+$$[y|\theta] = \frac{\Gamma(\alpha+\beta)}{\Gamma(\alpha)\Gamma(\beta)}(1-y)^{\beta-1}y^{\alpha-1}$$
+# Moments
+The moments in a beta distribution are two parameters $\alpha$ and $\beta$ that both explain the shape of the beta distribution. 
+
+## Moment Matching 
+To match moments, the following relationships can be used:\
+**Mean from $\alpha$ and $\beta$ :**
+$$\mu = \frac{\alpha}{\alpha+\beta}$$
+**Variance, $\sigma$, from $\alpha$ and $\beta$: **
+$$\sigma^2 = \frac{\alpha\beta}{(\alpha+\beta)^2(\alpha+\beta+1)}$$
+**$\alpha$ from mean and variance:**
+$$ \alpha = \mu(\frac{\mu(1-\mu)}{\sigma^2} - 1)$$
+
+**$\beta$ from mean and variance: **
+$$\beta = (1-\mu)(\frac{\mu(1-\mu)}{\sigma^2}-1)$$
+
+# Use in Ecology 
+Beyond its use as a prior for Bayes, other uses for Beta distributions include: 
+<li> Decay </li> 
+<li> Survival  </li> 
+<li> probability of transitioning from one state to another *(e.g., plants changing life stages)* </i> 
+<li> Plant cover as it is often skewed or has greatest densities at high and low probabilities </li> 
+<li> Population trait distributions</li>
+
+
+
+# References 
+**Hobbs, N.T. and Hooten, M.B.** 2015. Bayesian Models: A Statistical Primer for Ecologists.Princetom Unviersity Press, Princeton, NJ. \
+**Gotelli, N.** 2021. Video: https://ngotelli.github.io/Bio381Vids/ \
+**Damgaard, C.F. and Irvine, K.M.** 2019. Using the beta distribution to analyze plant cover data. *Journal of Ecology* 107: 2747-259. DOI: 10.1111/1365-2745.13200. \
+**Klauschies, T., Coutinho, R.M., and Gaedke, U.,** 2018. A beta distribution-based moment closure enhances the reliability of trait-based aggregate models for natural populations and communities. *Ecological Modelling* 381:46-77. DOI: 10.1016/j.ecolmodel.2018.02.001
+
+
