@@ -1,0 +1,246 @@
+---
+title: "Segre_data_summary"
+author: "Rosalee Elting"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(rstatix)
+library(ggpubr)
+```
+# Load data 
+```{r}
+annas <- read_csv("annasairdata.csv")
+print(annas)
+```
+
+# Cleaning Annas Data 
+Only using data from a competition. 
+Selecting data I am interested in from original data.
+
+```{r}
+annas_clean <- annas %>%
+  filter(solocomp == "comp") %>%
+  select(c("mass", "massSTD", "w.lifted", "w.liftedSTD", "wing.ar", "wing.arSTD", "wing.length", "wing.lengthSTD", "mean.hor_acel", "mean.hor_decel", "mean.arc_avghvel", "mean.total_vel", "ss.pitch_roll", "mean.pr_time", "mean.pr_degrees", "mean.arc_force", "PRTpercent"))
+
+annas_mean <-  as.data.frame(annas_clean) %>%
+  summarise(across(colnames(annas_clean), ~mean(.x, na.rm=TRUE))) %>%
+  pivot_longer(cols = colnames(annas_clean)) %>%
+  select(-c("name"))
+annas_var <- as.data.frame(annas_clean) %>%
+  summarise(across(colnames(annas_clean), ~var(.x, na.rm = TRUE))) %>%
+  pivot_longer(cols = colnames(annas_clean)) %>%
+  select(-c("name"))
+ 
+annas_summ <- data.frame(matrix( NA, 
+                                 ncol = 3, 
+                                 nrow = 17))
+
+names <- data.frame(rownames = colnames(annas_clean))
+
+annas_summ[,1] <- names
+annas_summ[,2] <- annas_mean
+annas_summ[,3] <- annas_var
+names(annas_summ) <- c("variable", "mean", "var")
+
+```
+
+# Plotting Distribution of Original Data 
+```{r}
+
+annas %>%
+  filter(solocomp== "comp") %>%
+  ggplot(aes(x= as.factor(0), y= mass))+
+  geom_violin()+
+  geom_point()+
+  theme_classic()
+
+annas %>%
+  filter(solocomp== "comp") %>%
+  ggplot(aes(x= as.factor(0), y= wing.length))+
+  geom_violin()+
+  geom_point()+
+  theme_classic()
+
+annas %>%
+  filter(solocomp== "comp") %>%
+  ggplot(aes(x= as.factor(0), y= wing.ar))+
+  geom_violin()+
+  geom_point()+
+  theme_classic()
+
+annas %>%
+   filter(solocomp== "comp") %>%
+  ggplot(aes(x= as.factor(0), y=w.lifted))+
+  geom_violin()+
+  geom_point()+
+  theme_classic()
+
+annas %>%
+   filter(solocomp== "comp") %>%
+  ggplot(aes(x= as.factor(0), y=PRTpercent))+
+  geom_violin(draw_quantiles = c(0.25, 0.5, 0.75))+
+  geom_point()+
+  theme_classic()
+
+annas %>%
+   filter(solocomp== "comp") %>%
+  ggplot(aes(x= as.factor(0), y= mean.hor_acel))+
+  geom_violin(draw_quantiles = c(0.25, 0.5, 0.75))+
+  geom_point()+
+  theme_classic()
+
+annas %>%
+   filter(solocomp== "comp") %>%
+  ggplot(aes(x= as.factor(0), y= mean.total_vel))+
+  geom_violin(draw_quantiles = c(0.25, 0.5, 0.75))+
+  geom_point()+
+  theme_classic()
+```
+
+# Exploring a Loop for Visualizations 
+
+```{r}
+
+x <- as.factor(0)
+ viz <- annas_clean %>%
+   cross_join(x, copy = TRUE)
+ 
+ colNames <- names(viz)[1:17]
+ 
+ for (i in colNames) {
+   plot <- ggplot(viz, aes_string(x= viz$y, y = i))+ 
+     geom_violin(draw_quantiles = c(0.25, 0.5, 0.75))+
+     geom_point() +
+     theme_classic()
+  print(plot)
+  Sys.sleep(2)
+   
+ }
+
+```
+
+```{r}
+normality_check <- as.data.frame(annas_clean)
+columns <- names(normality_check)
+
+for (i in columns) {
+  plot <- hist(x = normality_check[,i])
+  plot2 <- qqnorm(normality_check[,i]) 
+    qqline(normality_check[,i])
+  print(plot)
+  print(plot2)
+}
+
+```
+
+# Examining data distributions 
+For each of the above distributions, I will group based on if the data is normal or other distributed. Then using the mean and variance from annas_summ data frame, I will be able to establish fake data for this data set upon which to build a model. 
+**The list of variables, in order, are below. This order corresponds with the order of plots from the above loop.**
+ 1. mass
+ 2. massSTD
+ 3. w.lifted         
+ 4. w.liftedSTD      
+ 5. wing.ar          
+ 6. wing.arSTD       
+ 7. wing.length     
+ 8. wing.lengthSTD   
+ 9. mean.hor_acel   
+ 10. mean.hor_decel   
+ 11. mean.arc_avghvel 
+ 12. mean.total_vel   
+ 13.ss.pitch_roll   
+ 14. mean.pr_time    
+ 15. mean.pr_degrees 
+ 16. mean.arc_force   
+ 17. PRTpercent
+ 
+ **Proposed Distributions**
+**Normal**
+3. w.lifted         
+  4. w.liftedSTD 
+5. wing.ar - appears to increase at end, hard to tell but most close to normal    
+    6. wing.arSTD 
+7. wing.length     
+  8. wing.lengthSTD
+16. mean.arc_force   
+
+**Beta**
+ 1. mass - skewed right 
+  2. massSTD
+ 
+9. mean.hor_acel - left-skewed data
+10. mean.hor_decel   - left skewed data
+11. mean.arc_avghvel - left skewed data
+12. mean.total_vel  - left skewed data
+13.ss.pitch_roll - right skewed  
+14. mean.pr_time - right skwewed 
+15. mean.pr_degrees - left skewed data
+17. PRTpercent - left skewed
+ 
+
+```{r}
+
+#seeing if body mass is normally distributed
+hist(x= annas$mass, main= "Mass")
+qqnorm(annas$mass, main='Mass')
+qqnorm(annas$mass, main='Mass')
+qqline(annas$mass)
+```
+appears that Mass is not normally distributed, based on right skew. Working idea: data could be represented by a Beta or Weibel distribution. 
+
+```{r}
+hist(x= annas$wing.length, main= "wing.length")
+qqnorm(annas$wing.length, main='wing.length')
+qqline(annas$wing.length)
+```
+
+```{r}
+hist(x= annas$w.lifted, main= "w.lifted")
+qqnorm(annas$w.lifted, main='w.lifted')
+qqline(annas$w.lifted)
+```
+Weight lifted appears to be relatively normally distributed
+Loop to explore data 
+```{r}
+for(i in 9:ncol(annas)){
+  hist(x= annas[,i])
+qqnorm(annas[,i])
+qqline(annas[,i])
+}
+```
+
+
+# Moment matching for mass data to see fit of Beta. 
+```{r}
+alpha <- mass_mu*(mass_mu*(1-mass_mu)/mass_var  -1)
+beta <- (1-mass_mu)*(mass_mu*(1-mass_mu)/mass_var -1)
+
+```
+
+# Segre Notes
+Below are notes from this paper and things to consider when modeling 
+•	Birds that lifted more weight (accounting for wing morph) accelerated and decelerated faster, and did maneuvers with higher velocity. 
+o	Executed faster, larger radius arcing turns
+o	Centripetal acceleration of arcing turns not associated with burst capacity. 
+o	Pitch-roll turns in less time, and for more of their heading changes (proportionally) 
+•	Aspect ratio was a predictor for: centripetal acceleration and percent direction changes that were pitch-roll-turns. 
+•	Body mass not predict in models (overlapped with zero). 
+•	Competitor didn’t have substantial effect on performance metrics 
+o	Horizontal acceleration and deceleration affected in opposite direction than expected.
+o	Pitch down velocity increased 
+o	More arcing turns used. 
+•	When wings are predictors, only shape not size matters. 
+•	Aspect ratio predicted some maneuverability, only for some maneuvers. 
+•	Burst capacity is a brief increase in muscle strain and velocity: ability to do this should increase foraging behavior and competitive ability. 
+•	Use of arcing and pitch roll turns the only metric influenced by all morphology, burst muscle capacity and competitor presence. 
+
+
+
