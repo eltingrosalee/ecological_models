@@ -1,0 +1,72 @@
+---
+title: "EM_S23_TimeSeries"
+author: "Rosalee Elting"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Simple time series model 
+```{r}
+time <- seq(100)
+W <- rnorm(n=100,0,1)
+plot(time, W, type = "l") 
+```
+```{r}
+X <- NA
+X[1] <-1
+
+steps <- seq(100)
+for(i in 2:length(steps)){
+  X[i] = X[i-1]+ rnorm(1,0,1)
+}
+plot(steps, X, type="l")
+```
+```{r}
+acf(X)
+pacf(X)
+```
+generate some random data
+```{r}
+b = 5
+phi =0.8 
+X <- NA
+X[1] = 0
+steps <- seq(100)
+
+for(i in 2:length(steps)){
+  X[i] = phi * X[i-1] + b + rnorm(1,0,1)
+}
+
+plot(steps, X, type = "l")
+```
+Now running it as a Stan model 
+```{r}
+library(rstan)
+data <- list(N = length(X), X = X)
+data_fit <- stan(file= "timeseries.stan", data = data, iter= 10000, chains= 4)
+print(data_fit)
+summary(data_fit)
+
+```
+Moving Average Model 
+```{r}
+X <- NA
+X[1] <- 1 
+W <- NA 
+W[1] <- 0 
+steps <- seq(100)
+
+for(i in 2: length(steps)){ 
+  W[i] <-  0.8 * W[i-1] + rnorm(1,0,1)
+  X[i]= W[i]
+}
+
+plot(steps, X, type= "l")
+acf(X)
+pacf(X)
+```
+

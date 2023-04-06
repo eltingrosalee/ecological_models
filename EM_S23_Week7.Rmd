@@ -1,0 +1,66 @@
+---
+title: "EM_S23_Week7"
+author: "Rosalee Elting"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+Function for the inverse logit to calculte P from 
+```{r}
+library(rstan)
+library(tidybayes)
+library(dplyr)
+
+ilogit <- function(x){ 
+P <- exp(x)/(1+exp(x))
+print(P)
+}
+ilogit(0)
+
+```
+
+Make line of covariates 
+```{r}
+# x <- seq(from = -3, to = 3, by= 0.1)
+# # calculate log odds with out regression 
+# #Play around with slope here to illustrate the slope of the logistic regression 
+# y <- 0 + 1*x
+
+P <- ilogit(y)
+
+plot(x, P, type= "l")
+```
+# Faking some data
+we want 30 points that are all 0's and 1's 
+size = 1 because it's a Bernoulli type of Binomial. 
+probability is our formula of our line from before, error already in here because we already ahve the probabilistic part  
+```{r}
+x <- runif(30, -3, 3)
+ldata <- rbinom(n=30, size=1, prob= ilogit(0+1*x))
+plot(x,ldata)
+```
+
+#Make a stan model 
+```{r}
+log_data <- list(n= length(ldata), x = x, y = ldata)
+log_fit <- stan(file = "log_reg.stan", data = log_data, iter = 1000, chains= 4)
+summary(log_fit)
+```
+```{r}
+my_data <- data.frame(x, ldata)
+
+mean_calc<- my_data %>%
+  summarise(mean=mean(ldata), se=sd(ldata)/sqrt())
+
+steps<- log_fit %>% 
+  spread_draws(phat[n])
+  
+
+ggplot(steps, aes(x=as.factor(n), y=phat)) + 
+  geom_violin()+
+  geom_point(data=my_data, mapping = aes(x=x, y=ldata),  position = position_jitter(seed = 1, width = 0.2))
+```
+

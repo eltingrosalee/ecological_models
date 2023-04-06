@@ -1,0 +1,76 @@
+---
+title: "EM_S23_Week6"
+author: "Rosalee Elting"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+Same exercise as last week, but Beta0 isn't set, it has random error and is a linear relationship based on precipitation for that site level mean. 
+
+```{r}
+sigma_site <- 25
+sigma_plot <- 50 
+n_site <- 8
+n_plot <- 6
+beta1 <- 200
+
+#setting an x value, we're not modeling the x value, we're setting the sites at known precipitations for each of 8 sites 
+precip <- c(300,350, 400,450, 500, 550, 600, 700)
+
+beta0_mean <- 50 + 0.6*precip
+ plot(precip, beta0_mean)
+
+
+beta0_j <- beta0_mean + rnorm(n_site, 0, sigma_site)
+plot(precip, beta0_j)
+
+```
+```{r}
+biomass <- data.frame(
+  site = rep(1:8, each = n_plot),
+  plot = rep(1:6),
+  nit = rep(c(rep(0, n_plot/2), rep(1, n_plot/2)), n_site),
+  b_ij = NA
+)
+#Bij = Beta0,j + Beta1* Nit
+
+
+#making site means using overall mean. 
+#making data points using plot means
+plot_mean <- rep(beta0_j, each = n_plot)
+
+
+biomass$b_ij <- plot_mean + beta1*biomass$nit + rnorm(n_site*n_plot, mean= 0, sd= sigma_plot)
+
+#testing to see if it matches 
+mean(biomass$b_ij[biomass$nit==1])
+mean(biomass$b_ij[biomass$nit==0])
+
+#plotting based on site
+ggplot(biomass, aes(x=as.factor(nit), y = b_ij, col= as.factor(nit)))+ 
+  geom_point()+
+  facet_wrap(~as.factor(site))+
+  theme_classic()
+```
+
+# Writing Stan Model Now
+
+```{r}
+library(rstan)
+
+biomass_data <- list(n= nrow(biomass), n_site = as.integer(n_site), y= as.numeric(biomass$b_ij), site_id= biomass$site, nit = biomass$nit, precip = precip)
+
+biomass_fit <- stan(file = "biomassnitprecip.stan", data = biomass_data, iter = 1000, chains= 4)
+print(biomass_fit)
+```
+
+Make this for 16 sites instead. Will need to rep each precip twice. rep(precip, each =2)
+Plot 1: plot level model (facets and lines), facet (.~site), and have a line for each. Mean line of the intercept (site dependent) and the slope (0.61 estimated from)- Won't do because of time. 
+
+plot 2: x = precip, y = steps and plot posteriors using spread_draws
+  mu_site is the site level intercept (mu_site[6] isn Stan. Do violin or boxplot. 
+
+

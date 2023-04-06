@@ -1,0 +1,172 @@
+---
+title: "EM_S23_Week8"
+author: "Rosalee Elting"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(tidyverse)
+library(rstan)
+```
+
+# Temperature and Lead Litter Data 
+
+```{r}
+temp<- c(5,8,13,15,20,22)+273.15
+#intercept constant
+c <- 0.01
+#Boltzman's constant
+KB<-8.61e-5
+
+log.k.true<-   log (c* exp(-0.65* (1/(KB*temp) - 1/(KB*283.15)   ) ))
+#0.65 is theoretical activation energy for activation. 
+
+#adding some error due to factors that aren't temperature. Bugs! Floods! 
+log.k.true.err<-log.k.true+rnorm(6, 0,0.25)
+exp(log.k.true.err)
+#time can't start at 0, that is fixed and also Beta distribution doesn't like it. 
+time<- c( 5, 10, 20, 30, 45, 60, 75, 90, 120)
+```
+Code I didn't use, better way to fake the data below
+```{r}
+# samp_n<-length(time)
+# 
+# stream<-rep(1:6, each=samp_n)
+# kstream<-rep(log.k.true.err, each=samp_n)+ rnorm(60,0,0.1) #adding error in log, so multiplicative
+# mass<-exp(- (exp(kstream)*time))  #Since kstream is logged we need to exponentiate first
+# 
+# Kdf<- data.frame(stream=stream, kstream=kstream ,mass=mass, time= rep(time,6) )
+```
+
+Better way to fake the data 
+```{r}
+time<- c( 5, 10, 20, 30, 45, 60, 75, 90, 120)
+samp_n<-length(time)
+stream<-rep(1:6, each=samp_n)
+kstream.true<-rep(log.k.true.err, each=samp_n) 
+#two exponents because we've been dealing with log k the whole time, because we've been working with exponential. Now we have to re-exponentiate that log(k)
+mass.true<-exp(- (exp(kstream.true)*time)) #exponential decay
+# we have to re-parameterize the Beta distribution. The beta distribution takes alpha and beta, we need to re-parameterize this distribution for it's mean. The way to do this is gnarly(especially for variance, mu is okay). 
+
+# Alternatively, we can use the muphi reparameterize
+      # alpha = phi * mu 
+      # beta  = (1-mu) * phi
+      # phi is a dispersion parameter, not really the variance, but describing the spread. As it goes up, the dsitribution gets skinnier. If <1, get's concave, a horseshoe diagram. 
+#set phi at 60 to make look like real data. 
+phi=60
+alpha<-mass.true*phi
+beta<-  (1-mass.true)*phi
+mass<- rbeta(length(kstream.true), alpha, beta )
+Kdf<- data.frame(stream=stream, kstream=kstream.true ,mass=mass, time= rep(time,6) )
+
+#blue line is true data, black points are error associated with them, and hte phi of 60. 
+ggplot(Kdf, aes(time, mass)) + 
+  geom_point() +
+   geom_line(data = Kdf, aes(x = time, y = mass.true), color="blue")+
+  facet_wrap(. ~ stream)
+#the slope is getting steeper, because the temperature is going up at each site. 
+```
+# Commented Stan Model 
+We use the log K, because these are small values and stan likes the unit scale. Otherwise we're losing about 1% a day, this helps us get bigger values per day. 
+```{r}
+# sink("mult_decomp_beta.stan")
+# 
+# cat("
+#     
+#     data {
+#     int<lower = 1> N;
+#     int<lower = 1> nstreams;
+#     int<lower = 1> streamID[N];
+#     vector[N] time;
+#     vector[N] mass;
+#     vector[nstreams] temp;
+#     real KB;
+#     }
+#     
+#     parameters {
+#     vector <upper = 0> [nstreams] logk;    
+#     //real <lower = 0> intercept;
+#     real<lower = 0.1> phi; //  
+#     real slope_k_T;
+#     real int_k_T;
+#     real <lower = 0> sigma_stream;
+#     
+#     
+#     }
+#     
+#     transformed parameters{
+#     
+#     vector <lower=0.00001> [nstreams] k; 
+#      vector <lower=0, upper=1>[N] yhat; 
+#       vector <lower=0 > [N] alpha;
+#      vector <lower=0 > [N] B;
+# 
+# 
+# k=exp(logk);
+#     
+# for (i in 1:N){
+#       yhat[i]= 1 * exp(-k[streamID[i]]*time[i]);
+#        alpha[i] = yhat[i]*phi;
+#       B[i] = (1-yhat[i])*phi;
+# }
+#       
+#         
+#     
+#     }
+#     model {
+#     for (i in 1:N){
+#     mass[i] ~ beta(alpha[i],B[i]); // likelihood
+#     }
+#     for (j in 1:nstreams){
+#     logk[j]~normal( log(int_k_T) + slope_k_T * (1/(KB*temp[j]) - 1/(KB*283.15)   ) , sigma_stream);
+#     }
+#     
+#     int_k_T ~normal(0,0.1);
+#     slope_k_T~normal(0,1);
+#     sigma_stream~normal (0,2);
+#     
+#     }
+#     
+#     "
+#     ,fill=TRUE)
+# sink()
+```
+
+# Running stan File 
+```{r}
+decomp.dat<- list( N= length(Kdf$stream), nstreams=6, streamID=Kdf$stream, time=Kdf$time, mass=Kdf$mass, temp=temp, KB=8.61e-5)
+
+fit <- stan("multilevel_leaf_decomp.stan", data = decomp.dat,  iter = 1000, chains = 4)
+
+```
+```{r}
+print(fit)
+```
+Variance on heirarchichal models are tough. 
+```{r}
+traceplot(fit, pars =c("logk", "slope_k_T", "int_k_T", "phi", "sigma_stream"))
+
+```
+# Plotting 
+Lower values are warmer 
+on the Y is log K. 
+The lines are joint distribution of slope and intercept. 
+To make the data, we need more sites. the site variablity here is what is killing us. 
+```{r}
+tempcorr<-(1/(KB*temp) - 1/(KB*283.15)   )
+logk_sum<- summary(fit, pars="logk")$summary
+slope_int_sum<- summary(fit, pars=c("slope_k_T", "int_k_T "))$summary
+
+samples_fit<- rstan::extract(fit, pars=c("slope_k_T ", "int_k_T" ))
+
+plot (tempcorr, logk_sum[,1] )
+for (i in 1:1000){
+  lines(tempcorr, log(samples_fit$int_k_T[i]) + samples_fit$slope_k_T[i]*tempcorr, col='light gray')
+}
+points (tempcorr, logk_sum[,1], col='blue', pch=16)
+lines(tempcorr, log(slope_int_sum[2,1]) +slope_int_sum[1,1]*tempcorr, col="blue" )
+```
+
