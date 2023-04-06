@@ -14,11 +14,13 @@ library(tidyverse)
 library(dplyr)
 library(rstatix)
 library(ggpubr)
+library(rstan)
+library(tidybayes)
 ```
 # Load data 
 ```{r}
 annas <- read_csv("annasairdata.csv")
-print(annas)
+head(annas)
 ```
 
 # Cleaning Annas Data 
@@ -52,60 +54,9 @@ names(annas_summ) <- c("variable", "mean", "var")
 
 ```
 
-# Plotting Distribution of Original Data 
-```{r}
 
-annas %>%
-  filter(solocomp== "comp") %>%
-  ggplot(aes(x= as.factor(0), y= mass))+
-  geom_violin()+
-  geom_point()+
-  theme_classic()
 
-annas %>%
-  filter(solocomp== "comp") %>%
-  ggplot(aes(x= as.factor(0), y= wing.length))+
-  geom_violin()+
-  geom_point()+
-  theme_classic()
-
-annas %>%
-  filter(solocomp== "comp") %>%
-  ggplot(aes(x= as.factor(0), y= wing.ar))+
-  geom_violin()+
-  geom_point()+
-  theme_classic()
-
-annas %>%
-   filter(solocomp== "comp") %>%
-  ggplot(aes(x= as.factor(0), y=w.lifted))+
-  geom_violin()+
-  geom_point()+
-  theme_classic()
-
-annas %>%
-   filter(solocomp== "comp") %>%
-  ggplot(aes(x= as.factor(0), y=PRTpercent))+
-  geom_violin(draw_quantiles = c(0.25, 0.5, 0.75))+
-  geom_point()+
-  theme_classic()
-
-annas %>%
-   filter(solocomp== "comp") %>%
-  ggplot(aes(x= as.factor(0), y= mean.hor_acel))+
-  geom_violin(draw_quantiles = c(0.25, 0.5, 0.75))+
-  geom_point()+
-  theme_classic()
-
-annas %>%
-   filter(solocomp== "comp") %>%
-  ggplot(aes(x= as.factor(0), y= mean.total_vel))+
-  geom_violin(draw_quantiles = c(0.25, 0.5, 0.75))+
-  geom_point()+
-  theme_classic()
-```
-
-# Exploring a Loop for Visualizations 
+# Using Loop to Visualize Original Data 
 
 ```{r}
 
@@ -127,6 +78,7 @@ x <- as.factor(0)
 
 ```
 
+# Using loop to check Orginial Data for Normality 
 ```{r}
 normality_check <- as.data.frame(annas_clean)
 columns <- names(normality_check)
@@ -138,11 +90,11 @@ for (i in columns) {
   print(plot)
   print(plot2)
 }
-
 ```
 
 # Examining data distributions 
-For each of the above distributions, I will group based on if the data is normal or other distributed. Then using the mean and variance from annas_summ data frame, I will be able to establish fake data for this data set upon which to build a model. 
+
+For each of the above distributions, I will group based on if the data is normal or otherwise distributed. Then using the mean and variance from annas_summ data frame, I will be able to establish fake data for this data set upon which to build a model. 
 **The list of variables, in order, are below. This order corresponds with the order of plots from the above loop.**
  1. mass
  2. massSTD
@@ -184,46 +136,90 @@ For each of the above distributions, I will group based on if the data is normal
 14. mean.pr_time - right skwewed 
 15. mean.pr_degrees - left skewed data
 17. PRTpercent - left skewed
+
+# Generating Fake Data 
+For each variable, I will create a fake data set that has the same mean and variance, for 32 individuals and the distribution type seen above. 
  
-
+## Data for variables with normal distribution 
+column 3, weight lifted, w.lifted 
 ```{r}
+w.lifted.simu <- rnorm(n =32, mean = annas_summ[1,2], sd= sqrt(annas_summ[1,3]))
 
-#seeing if body mass is normally distributed
-hist(x= annas$mass, main= "Mass")
-qqnorm(annas$mass, main='Mass')
-qqnorm(annas$mass, main='Mass')
-qqline(annas$mass)
-```
-appears that Mass is not normally distributed, based on right skew. Working idea: data could be represented by a Beta or Weibel distribution. 
+plot(w.lifted.simu, col = "blue", ylim = c(3.5,7.5))
+points(annas_clean$w.lifted, col = "red")
+hist(w.lifted.simu)
 
-```{r}
-hist(x= annas$wing.length, main= "wing.length")
-qqnorm(annas$wing.length, main='wing.length')
-qqline(annas$wing.length)
-```
-
-```{r}
-hist(x= annas$w.lifted, main= "w.lifted")
-qqnorm(annas$w.lifted, main='w.lifted')
-qqline(annas$w.lifted)
-```
-Weight lifted appears to be relatively normally distributed
-Loop to explore data 
-```{r}
-for(i in 9:ncol(annas)){
-  hist(x= annas[,i])
-qqnorm(annas[,i])
-qqline(annas[,i])
-}
 ```
 
 
-# Moment matching for mass data to see fit of Beta. 
+
+# Moment matching for Beta Distributions 
+Will do later with a loop through the data that are beta distributed, this is just for one data set for now: 
+mean horizontal acceleration 
 ```{r}
-alpha <- mass_mu*(mass_mu*(1-mass_mu)/mass_var  -1)
-beta <- (1-mass_mu)*(mass_mu*(1-mass_mu)/mass_var -1)
+mu <- annas_summ[9,2]
+var <- annas_summ[9,3]
+
+alpha <- mu*(mu*(1-mu)/var - 1)
+beta <- (1-mu)*(mu*(1-mu)/var-1)
+
+#generating fake data with these variables 
+mean.hor_acel_simu <- rbeta(n=32, shape1 = -86.0668, shape2 = 73.074, ncp =0)
+# This keeps generating NAs, so below I am running with some test data. 
+
+y_rbeta <- rbeta(n=10000, shape1 = -86, shape2 = 73)
+plot(density(y_rbeta))
+
 
 ```
+
+I am having difficulty creating fake data sets with Beta distributions. For now, I am making a normally distributed fake data set for horizontal acceleration (variable 9) so that I can work on building a model around it, but need to come back to this distribution issue. 
+```{r}
+
+mean.hor_acel_simu <- rnorm(n =32, mean = annas_summ[9,2], sd= sqrt(annas_summ[9,3]))
+
+plot(mean.hor_acel_simu, col = "blue", ylim = c(3.5,7.5))
+points(annas_clean$mean.hor_acel, col = "red")
+hist(mean.hor_acel_simu)
+```
+# Running Simple Linear Regression Stan Model with Simulated Data 
+```{r}
+annas_data_simu <- list(
+      n = length(w.lifted.simu),
+      mhoracel = as.numeric(mean.hor_acel_simu),
+      wlifted = as.numeric(w.lifted.simu)
+)
+
+annas_fit <- stan(file = "annas_performance_model.stan", data = annas_data_simu, iter = 1000, chains = 4)
+print(annas_fit)
+```
+
+# Visualizing and Summarizing Data 
+```{r}
+annas_fit_summ<- summary(annas_fit)
+
+annas_data_simu <- data.frame(annas_data_simu)
+
+mean_calc<- annas_data_simu %>%
+  summarise(mean.hor_acel=mean(mhoracel), se=sd(mhoracel)/sqrt(32))
+
+steps<- annas_fit_summ %>% 
+#   spread_draws(a[n])
+#   
+# 
+# ggplot(steps, aes(x=as.factor(site_id), y=mu_site)) + 
+#   geom_violin()+
+#   geom_boxplot(width=1, color="grey", alpha=0.2) +
+#   geom_point(data=biomass_data, mapping = aes(x=as.factor(site_id), y=y ),  position = position_jitter(seed = 1, width = 0.1))+
+#   geom_point(data=mean_calc, mapping = aes(x=as.factor(site_id), y=meanB), color= "#FF3300")+
+#   xlab("Site")+
+#   ylab("Bioamss")+
+#   labs(title = "No Pooling")+
+#   theme_classic()+
+#   facet_wrap(.~site_id, nrow = 2)
+```
+
+
 
 # Segre Notes
 Below are notes from this paper and things to consider when modeling 

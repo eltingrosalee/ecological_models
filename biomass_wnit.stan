@@ -21,9 +21,9 @@ parameters {
   model { 
     for( i in 1: n){
       if (nit[i] == 1)
-          y[i] ~ normal(mu_site_nit, sigma_plot);
+          y[i] ~ normal(mu_site_nit[site_id[i]], sigma_plot);
       else
-          y[i] ~normal(mu_site_cntr, sigma_plot);
+          y[i] ~normal(mu_site_cntr[site_id[i]], sigma_plot);
 }
     mu_site_nit~ normal((mu + beta1), sigma_site); //eight means for each site's 3 plots with nitrogen
     mu_site_cntr~ normal(mu, sigma_site); //eight means for each site's 3 plots without nitrogen 
