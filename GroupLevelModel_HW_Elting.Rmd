@@ -1,23 +1,42 @@
 ---
-title: "EM_S23_Week5"
+title: "Group Level Models"
 author: "Rosalee Elting"
 date: "`r Sys.Date()`"
-output: html_document
+output: 
+  html_document: 
+    toc: true
+    toc_float: true
+    number_sections: true
+    theme: "cerulean"
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Week 5 - Day 1
+# Group level Models    
+This week we are replicating the work we did last week, but including a treatment where 3 plots at each site receive Nitrogen supplement, which boosts their mean biomass by 200 grams, on top of the overall mean biomass of 400. 
 
-## Biomass example
+# Grassland Example
+For our example, we are studying biomass of Montana grasslands. This is done at 8 sites where conditions are expected to differ and have effects on biomass. Within each site, there are 6 plots, therefore a multilevel model is appropriate to represent our data. \
+
+Our model will use the following relationship: 
+$$B_{i,j} = B_j + \epsilon_{i,j}$$ 
+where: 
+$$\epsilon_j \sim normal(0, \sigma_{site})$$
+In words this says: the grass biomass for the whole study (plots are $i$ and sites are $j$) are a result of the average biomass from each site ($B_j$) with normally distributed error. 
+
+The prior probability for mean site biomass is represented as: 
+$$ B_{j} = B_{mean} + e_{j}$$
+
+# Load Libraries and Input Known Values
 
 ```{r}
 library(tidyverse)
 library(MetBrewer)
 library(rstan)
 library(tidybayes)
+library(dplyr)
 
 sigma_site <- 50
 sigma_plot <- 50 
@@ -28,10 +47,10 @@ beta1 <- 200
 #going to need another column in df called nit, that is repeat of 0 0 0 1 1 1 at each site. 
 ```
 
+# Generate Fake Dataset 
 ```{r}
 biomass <- data.frame(
   site = rep(1:8, each = n_plot),
-  plot = rep(1:6),
   nit = rep(c(rep(0, n_plot/2), rep(1, n_plot/2)), n_site),
   b_ij = NA
 )
@@ -93,9 +112,9 @@ Below is the stan code I've written, commented out but to have it in one locatio
 #   model { 
 #     for( i in 1: n){
 #       if (nit[i] == 1)
-#           y[i] ~ normal(mu_site_nit, sigma_plot);
+#           y[i] ~ normal(mu_site_nit[site_id[i]], sigma_plot);
 #       else
-#           y[i] ~normal(mu_site_cntr, sigma_plot);
+#           y[i] ~normal(mu_site_cntr[site_id[i]], sigma_plot);
 # }
 #     mu_site_nit~ normal((mu + beta1), sigma_site); //eight means for each site's 3 plots with nitrogen
 #     mu_site_cntr~ normal(mu, sigma_site); //eight means for each site's 3 plots without nitrogen 
@@ -110,31 +129,43 @@ Below is the stan code I've written, commented out but to have it in one locatio
 ```{r}
 biomass_fit_summ<- summary(biomass_fit)
 
-biomass_data <- data.frame(biomass_data)
+biomass.data <- data.frame(biomass_data)
 
-mean_calc<- biomass_data %>%
-  group_by(site_id) %>%
+mean_calc<- biomass.data %>%
+  group_by(site_id, nit) %>%
   summarise(meanB=mean(y), se=sd(y)/sqrt(6))
 
-steps<- biomass_fit %>% 
-  spread_draws(mu_site_nit[site_id])
+# steps<- biomass_fit %>% 
+#   spread_draws(mu_site)
+
+steps_nit <- biomass_fit %>%
+  spread_draws(mu_site_nit[site_id]) %>% 
+  mutate(nit = 1 ) %>% 
+  rename(mu = mu_site_nit)
+
+steps_cntr <- biomass_fit %>%
+  spread_draws(mu_site_cntr[site_id]) %>%
+  mutate(nit =0 ) %>% 
+  rename(mu = mu_site_cntr)
+
+steps_comb <- steps_cntr %>%
+  full_join(steps_nit)
   
 
-ggplot(steps, aes(x=as.factor(site_id), y=mu_site_nit)) + 
+ggplot(steps_comb, aes(x=as.factor(site_id), y = mu)) + 
   geom_violin()+
   geom_boxplot(width=0.1, color="grey", alpha=0.2) +
-  geom_point(data=biomass_data, mapping = aes(x=as.factor(site_id), y=y ),  position = position_jitter(seed = 1, width = 0.2))+
+  geom_point(data=biomass.data, mapping = aes(x=as.factor(site_id), y=y),  position = position_jitter(seed = 1, width = 0.2))+
   geom_point(data=mean_calc, mapping = aes(x=as.factor(site_id), y=meanB), color= "#3399FF")+
   xlab("Site")+
-  ylab("Bioamss")+
-  labs(title = "Complete Pooling")+
+  ylab("Biomass")+
+  facet_wrap(.~nit)+
   theme_classic()
 ```
 
 ### Visualization 2
 ```{r}
-ggplot(steps, aes(x=as.factor(site_id), y=mu_site_nit)) + 
-  
+ggplot(steps_comb, aes(x=as.factor(site_id), y=mu)) + 
   geom_boxplot(width=0.1, color="grey", alpha=0.5, outlier.shape = NA) +
   #geom_point(data=B, mapping = aes(x=as.factor(site), y=B_ij ),  position = position_jitter(seed = 1, width = 0.2))+
   geom_point(data=mean_calc, mapping = aes(x=as.factor(site_id), y=meanB), color="#3399FF")+
@@ -142,7 +173,7 @@ ggplot(steps, aes(x=as.factor(site_id), y=mu_site_nit)) +
    geom_point(data=mean_calc, mapping = aes(x=as.factor(site_id), y=meanB-2.3*se), color="#3399FF")+
   xlab("Site")+
   ylab("Biomass")+
-  labs(title = "Complete Pooling")+
-  theme_classic()
+  theme_classic()+ 
+  facet_wrap(.~nit)
 ```
 

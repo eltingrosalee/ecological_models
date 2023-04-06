@@ -1,0 +1,158 @@
+---
+title: "Nitrogen and Precipitation Effect on Biomass"
+author: "Rosalee Elting"
+date: "`r Sys.Date()`"
+output: 
+  html_document: 
+    toc: true
+    toc_float: true
+    number_sections: true
+    theme: "cerulean"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Overview
+Same exercise as last week, but Beta0 isn't set, it has random error and is a linear relationship based on precipitation for that site level mean. 
+
+## Sites
+Originally I ran this for 8 sites, but then increased to 16 sites, with two duplicates of each precipitation level. 
+
+```{r}
+library(tidyverse) 
+library(rstan)
+library(tidybayes)
+
+sigma_site <- 25
+sigma_plot <- 50 
+n_site <- 16
+n_plot <- 6
+beta1 <- 200
+
+#setting an x value, we're not modeling the x value, we're setting the sites at known precipitations for each of 8 sites 
+precip <- rep(c(300,350, 400,450, 500, 550, 600, 700), each =2)
+
+beta0_mean <- 50 + 0.6*precip
+
+
+beta0_j <- beta0_mean + rnorm(n_site, 0, sigma_site)
+plot(precip, beta0_j)
+
+```
+
+# Generating Fake Data 
+```{r}
+biomass <- data.frame(
+  site = rep(1:16, each = n_plot),
+  plot = rep(1:6),
+  nit = rep(c(rep(0, n_plot/2), rep(1, n_plot/2)), n_site),
+  b_ij = NA
+)
+#Bij = Beta0,j + Beta1* Nit
+
+
+#making site means using overall mean. 
+#making data points using plot means
+plot_mean <- rep(beta0_j, each = n_plot)
+
+
+biomass$b_ij <- plot_mean + beta1*biomass$nit + rnorm(n_site*n_plot, mean= 0, sd= sigma_plot)
+
+#testing to see if it matches 
+mean(biomass$b_ij[biomass$nit==1])
+mean(biomass$b_ij[biomass$nit==0])
+
+#plotting based on site
+ggplot(biomass, aes(x=as.factor(nit), y = b_ij, col= as.factor(nit)))+ 
+  geom_point()+
+  facet_wrap(~as.factor(site))+
+  theme_classic()
+```
+
+# Writing Stan Model Now
+
+```{r}
+
+
+biomass_data <- list(n= nrow(biomass), n_site = as.integer(n_site), y= as.numeric(biomass$b_ij), site_id= biomass$site, nit = biomass$nit, precip = precip)
+
+biomass_fit <- stan(file = "biomassnitprecip.stan", data = biomass_data, iter = 1000, chains= 4)
+print(biomass_fit)
+```
+
+## Commented Stan Code 
+```{r}
+
+# data {
+#   int<lower=0> n;
+#   int<lower=0> n_site;
+#   vector<lower=0>[n] y;
+#   int<lower=0> site_id [n] ;
+#   int<lower=0> nit [n];
+#   vector<lower=0> [n_site] precip;
+# }
+# 
+# parameters {
+#   real<lower=0> sigma_plot;
+#   real<lower=0> sigma_site;
+#   real<lower=0> beta1; // effect of adding Nitrogen
+#   real site_int;
+#   real<lower=0> site_slope;
+#   vector<lower=0> [n_site] mu_site; 
+# }
+# 
+# model {
+#   for (i in 1:n){
+#     y[i] ~ normal(mu_site[site_id[i]] + beta1*nit[i], sigma_plot);
+#   }
+#   mu_site ~ normal(site_int + site_slope*precip, sigma_site);
+#   sigma_plot ~ normal(0, 100);
+#   sigma_site ~ normal(0, 100);
+#   beta1 ~ normal(100,300);
+#   site_int ~ normal(0,50);
+#   site_slope ~ normal(0.6, 0.6);
+# }
+
+```
+
+
+# Plotting Result of Model 
+Boxplots and Violin plots represent the estimated density of intercepts from Stan Model. Points represent the probability distribution (95% Confidence Interval) of the fake data that I generated. At each precipitation there are two sites, hence the multiple points at each location. The data represented here are the **intercepts** of a model with a slope of 0.6. This represents the difference in biomass intercept of the linear regression, based on both nitrogen supplementation and precipitation at each site. 
+
+```{r}
+#summary of Stan model data
+biomass_fit_summ<- summary(biomass_fit)
+
+#mean calc is the summary of the generated data 
+biomass_data <- data.frame(biomass_data)
+
+mean_calc<- biomass_data %>%
+  group_by(site_id) %>%
+  summarise(meanB=mean(y), se=sd(y)/sqrt(6)) %>%
+  mutate(precip = precip)
+
+#steps is the result of the stan model's data
+precip <- data.frame(precip,
+                     site_id = c(1:16))
+
+steps<- biomass_fit %>% 
+  spread_draws(mu_site[site_id]) %>%
+  inner_join(precip)
+
+
+ggplot(mean_calc, aes(x=as.factor(precip), y = meanB))+
+  geom_violin(data= steps, mapping = aes(x= as.factor(precip), y= mu_site))+
+  geom_boxplot(data= steps, mapping = aes(x= as.factor(precip), y= mu_site), width=0.1, color="grey", alpha=0.2)+
+     geom_point(data=mean_calc, mapping = aes(x=as.factor(precip), y=meanB-2.3*se), color="red", position = position_jitter(seed = 1, width = 0.2))+
+  geom_point(data=mean_calc, mapping = aes(x=as.factor(precip), y=meanB), color="black", position = position_jitter(seed = 1, width = 0.2))+
+   geom_point(data=mean_calc, mapping = aes(x=as.factor(precip), y=meanB+2.3*se), color="blue", position = position_jitter(seed = 1, width = 0.2))+
+  xlab("Precipitation")+
+ ylab("Biomass Regression Intercept")+
+  theme_classic()
+
+```
+
+
+
+
