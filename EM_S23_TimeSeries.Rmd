@@ -31,7 +31,7 @@ pacf(X)
 ```
 generate some random data
 ```{r}
-b = 5
+b = 25
 phi =0.8 
 X <- NA
 X[1] = 0
@@ -46,6 +46,7 @@ plot(steps, X, type = "l")
 Now running it as a Stan model 
 ```{r}
 library(rstan)
+mu <- b/ (1-phi)
 data <- list(N = length(X), X = X)
 data_fit <- stan(file= "timeseries.stan", data = data, iter= 10000, chains= 4)
 print(data_fit)
