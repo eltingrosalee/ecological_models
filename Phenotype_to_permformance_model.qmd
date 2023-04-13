@@ -2,74 +2,91 @@
 title: "A Model to Connect Hummingbird Phenotypes to Flight Performance"
 author: "Rosalee Elting"
 format: 
-    pdf:
+    html:
       toc: true
       toc-location: left
+      prefer-html: true
 ---
 
-# 
+# Project Introduction
 
-# Introduction
+For my project, I propose methods to understand the social dominance of hummingbirds and how social hierarchies are maintained. To evaluate this, I will use both field and lab work to create a model that reflects the phenotype \> performance \> fitness paradigm presented by Arnold in 1983 (Arnold, 1983). The actual variables I will measure are outlined below in the **Measurement Variables** section. In brief, during the summer of 2023 at the Field Research Station at Fort Missoula, I will conduct experiments up with dyadic trials between two male hummingbirds where a limiting resource is introduced (nectar or perches) to establish which individual maintains access to this resource and chases away an opponent. I will then connect these wins to traits that vary between individuals. These phenotypes will be morphometric traits, such as body and wing morphological. Performance will be evaluated via analysis of flight kinematic complexity and metabolic efficiency.
 
-For my project, I propose methods to understand the social dominance of hummingbirds and how social hierarchies are maintained. To evaluate this, I will use both field and lab work to create a model that reflects the phenotype \> performance \> fitness paradigm presented by Arnold in 1983 (Arnold, 1983). The actual variables I will measure are outlined below in the \[###Measurement Variables\] section. Overall, I will set these experiments up with dyadic combinations of trials between two male hummingbirds where a limiting resource is introduced (nectar or perches) to establish which individual maintains access to this resource and chases away an opponent. I will then connect these wins to traits about the individual that are variable. These will be phenotypic morphometric traits, as well as performance measurements from metabolic and flight kinematic measures. Lastly, with these characteristics I hope to understand how phenotypes and fitness connect to performance in an ecological landscape. I hope to do this by combining 1. fight data from the field and those winning individuals' phenotypes and 2. more fine-tuned phenotypic data and one-on-one fight results from lab trials. With this, I seek to establish what phenotypes and fitness performance traits are most predictable of social dominance hierarchies in hummingbirds.
+Lastly, with these characteristics I seek to understand how phenotypes and performances connect to overall fitness in an ecological landscape. To do this, I will be using dominance over a nectar resource landscape-and presumably the resulting access to food and mates--as a proxy for an individual's overall fitness. I will understand which individuals are dominant from fight data from the field and winning individuals' phenotypes. I can then combine these data with the fine-tuned phenotypic data and one-on-one fight results from lab trials. With this, I seek to establish what phenotypes and fitness performance traits are most predictable of social dominance hierarchies in hummingbirds.
 
-# 
+## Project Question
 
-# Questions
+The above summarizes my project's overall goals. First, I will investigate only the phenotype to performance transitions in my model. I will explote if individual's performance is predictable and can be modeled through Bayesian methods. As a result of this simplified goal, I ask:
 
-Based on the above introduction, I ask the following two questions:
-
-1.  What variables in a complex suite of hummingbird morphological traits and flight maneuvers predict flight characteristics that are associated with increased speed and maneuverability?
-
-# 
+*What variables in a complex suite of hummingbird morphological traits and flight maneuvers predict flight characteristics that are associated with increased speed and maneuverability?*
 
 # Method
 
-To investigate this, I hope to use the Arnold's Paradigm proposed in his 1983 paper. The framework below (Bergmann and McElroy, 2014) illustrates this experiment method graphically (below.)
+## Arnold's Paradigm {#arnolds-paradigm}
+
+Overall, I will be approaching this work using the Arnold's Paradigm proposed in his 1983 paper. The framework below (Bergmann and McElroy, 2014) illustrates this experiment method graphically.
 
 ![(Bergmann and McElroy, 2014)](matrix_test.png)
 
+## Structural Equation Model (SEM) {#structural-equation-model-sem}
+
+To approach this proposed Arnold's Paradigm, I will first need to understand the relative influence of a bird's actual body condition, an unknown variable we can't fully know, on the phenotypic traits I will measure. I will also need to understand the relative influence of each phenotypic trait on the flight and metabolic performance measures that I measure. To do this, I will be using a **Structural Equation Model**, which is an appropriate model to represent how latent variables (those that are thought to exist but cannot be directly observed, *e.g. body quality*) are causally connected to variables that i can measure (*e.g. flight and metabolic performance metrics)*.
+
+Structural Equation Models are representing the relative contribution of each exogenous variable (solely predictors, *e.g. phenotypes)* to a causal relationship with one or several exogenous variables (both predicted and predictive variables, *e.g. flight performance)*. Between each variable, a path can be drawn. Multiple paths each represent a partial regression coefficient, illustration the join influence of each predictor on the response variable's value.
+
+### Piecewise SEM
+
+For each combination of endogenous variables, relationships are estimated as local estimations, meaning they aren't dependent on other relationships between one of the variables with another set of variables. This is called **Piecewise SEM** and allows for evaluation of each relationship individually, then stringing together these inferences, in a piecewise fashion.
+
+### Path Model
+
+I will represent this model with a path diagram, which illustrates each piece of the piecewise SEM visually. This path diagram also assumes no reversals between variables (unidirectional) and no changes in variable values that are informed by a latter variables value (feedback). These assumptions are appropriate for the variables of this project.
+
+Paths in a path model can be summarize into a matrix of regressions between each pairs of variables. This matrix is valuable, as it will be modelling data that I have input, but producing a matrix of regressions. I can then input secondary data sets to test if this matrix of regressions in secondary data sets match those in the original data set.
+
+Below is the proposed path model, without regression values, that I intend to quantify. Red arrows indicate paths that I propose have large influences on the endogenous variables while gray arrows are those that I hypothesize will have weak correlations.
+
+![Phenotype-Performance Path Model](path_model.png)
+
+# Data
+
 ## Measurement Variables
 
-I will be using a modified version of this Arnold framework in \[Method\] , but instead of comparing the phenotype-performance relationship of each species, I will be evaluating this on an individual level. My measurements, and their categories, will be:
+I will be using a modified version of the [Arnold's Paradigm](#arnolds-paradigm), but instead of comparing the phenotype-performance relationship of each species, I will be evaluating this on an individual level. My measurements, and their categories, will be:
 
 **Phenotypic Measures:**
 
--   Wing Aspect Ratio
-
 -   Body Mass
+
+-   Wing Aspect Ratio
 
 -   Burst Muscle Capacity
 
 **Performance Measures:**
 
--   Flight accelerations and deceleration
+-   Flight accelerations
 
 -   Arcing turn speed and radii
 
+-   Maneuvering velocity
+
+-   Centripetal Acceleration
+
 -   Percentage of turns that are complex pitch-roll turns
 
-## 
+## *Calypte anna* Repository Data
 
-Data and Model
+I will be holding 6 Calliope Hummingbirds (*Selasphorus calliope*) captive in the spring of 2023. As I do not yet have data, I have found public repositories of data similar to that which I will collect.
 
-I will be holding 6 Calliope Hummingbirds (*Selasphorus calliope*) captive in the spring of 2023. As I do not yet have data, I will find public repositories of data similar to that which I will collect. The data I am looking for will likely come from multiple sources and will be of two forms:
+Below is code I have written to explore data collected in Segre et al., 2015, an *eLife* publication exploring phenotypes and flight performance. The authors evaluated this data using an **information-theoretic approach** which compares the several possible scenarios and weights their relative predictive importance. The authors evaluated these data using a canned R function, nlme, therefore I would like to evaluate the same data with the [Structural Equation Model (SEM)](#structural-equation-model-sem) I have proposed already.
 
-1.  One-on-one dyadic fight results, which I can integrate into a Bayes framework to use as priors to predict winners of unique dyads. I would then like to integrate morphometrics to these predictors to see if they co-vary. Data from Márquez-Luna et al. 2022. provides dyadic win-loss data, but only as sums and it is interspecific, so I am hopeful to find another source with intraspecific competitions results.
+Below are the steps I have taken to first understand this data:
 
-2.  I can use prior data collected by the Tobalske lab, potentially supplemented with other published data on Calliope hummingbirds to provide morphometric data. I can then hopefully find open source data on the fitness (metabolic rate and body composition) measures so that I can model the regressions between each phenotype and fitness combination in the matrix. If I have difficulty finding this data for Calliope hummingbirds, I will likely find it for Calypte anna instead, as it is more greatly studied, metabolic measures have already been published,and I have collaborators studying this species.
-
-# Public Repository Data for *Calypte anna*
-
-Below is code I have written to explore data collected in Segre et al., 2015, an *eLife* publication exploring phenotypes and flight performance. The authors evaluated this data using an **information-theoretic approach** which compares the several possible scenarios and weights their relative predictive importance. The authors evaluated these data using a canned R function, nlme, therefore I would like to write a model to evaluate the same data and assess if I come to the same conclusions.
-
-## Exploring Data for *Calypte anna*
-
-### Loading Libraries and Data
-
-First, I will load the necessary libraries
+-   Load the necessary libraries
 
 ```{r}
+#| echo: false
+#| output: false
 library(tidyverse)
 library(dplyr)
 library(rstatix)
@@ -78,21 +95,25 @@ library(rstan)
 library(tidybayes)
 ```
 
-I will then load the csv of data from this publication
+-   Load the csv of data from this publication and print the heading of the data.
 
 ```{r}
+#| echo: false
+#| output: false
 annas <- read_csv("annasairdata.csv")
 head(annas)
 ```
 
-I next am filtering and cleaning this data. I am removing data from solo trials, and keeping only competitive trials. The assumption is that birds perform flight maneuvers with increases speed or maneuverability in the presence of another individual. Therefore, I only include her data from competitive trials. Further I am selecting data I am interested in from this original data set.
+-   I next am filtering and cleaning this data. I am removing data from solo trials, and keeping only competitive trials. The assumption is that birds perform flight maneuvers with increases speed or maneuverability in the presence of another individual. Therefore, I only include data from competitive trials. Further I am selecting data I am interested in from this original data set.
 
-In this code chunk, I also create a summary data frame with means and variances for each variable.
+    -   In this code chunk, I also create a summary data frame with means and variances for each variable. This chunk is not printed for simplicity.
 
 ```{r}
+#| echo: false
+#| output: false
 annas_clean <- annas %>%
   filter(solocomp == "comp") %>%
-  select(c("mass", "massSTD", "w.lifted", "w.liftedSTD", "wing.ar", "wing.arSTD", "wing.length", "wing.lengthSTD", "mean.hor_acel", "mean.hor_decel", "mean.arc_avghvel", "mean.total_vel", "ss.pitch_roll", "mean.pr_time", "mean.pr_degrees", "mean.arc_force", "PRTpercent"))
+  select(c("mass", "w.lifted", "wing.ar", "wing.length", "mean.hor_acel", "mean.hor_decel", "mean.arc_avghvel", "mean.total_vel", "ss.pitch_roll", "mean.pr_time", "mean.pr_degrees", "mean.arc_force", "PRTpercent"))
 
 annas_mean <-  as.data.frame(annas_clean) %>%
   summarise(across(colnames(annas_clean), ~mean(.x, na.rm=TRUE))) %>%
@@ -105,7 +126,7 @@ annas_var <- as.data.frame(annas_clean) %>%
  
 annas_summ <- data.frame(matrix( NA, 
                                  ncol = 3, 
-                                 nrow = 17))
+                                 nrow = 13))
 
 names <- data.frame(rownames = colnames(annas_clean))
 
@@ -113,169 +134,196 @@ annas_summ[,1] <- names
 annas_summ[,2] <- annas_mean
 annas_summ[,3] <- annas_var
 names(annas_summ) <- c("variable", "mean", "var")
+head(annas_summ)
 ```
 
-### Visualizing Original Data
+### Transforming Data
+
+Because I am investigating the covariance of multiple variables, yet these variables have different magnitude of values, this can be an issue when comparing the relative influence of variables. To address this, I will conduct a Z- transformation to standardize all my simulated data using a X transformation, which follows this formula:
+
+$$
+Z_x = \frac{(X_i - \bar X)}{sd(X)}
+$$ {#eq-z-transformation}
+
+##  {data-link="Generating Fake Data"}
+
+I will execute this in R, creating a new, standardized data set., called annas_trans to represent the transformed values
+
+```{r}
+#| echo: false
+annas_trans <- data.frame(matrix(nrow = 32, ncol= 13))
+
+annas_trans <- scale(annas_clean)
+#confirming that scale command produces same standardization as math below 
+scale_test <- (annas_clean$mass - mean(annas_clean$mass))/sd(annas_clean$mass)
+
+scale <- ggplot(data= as.data.frame(annas_trans), aes(x= as.factor(0), y= mass))+ 
+  geom_violin()+  
+  geom_point(color = "cornflowerblue")+ 
+  labs(title = "Using Scale Function")
+z_math <- ggplot(data= annas_clean, aes(x= as.factor(0), y =scale_test))+ 
+  geom_violin()+
+  geom_point(color = "red")+ 
+  labs(title = "Using Z-transformation Math")
+
+ggarrange(scale, z_math,
+          nrow = 1)
+
+```
+
+I conducted my own math to confirm the scale transformation works and with the above figure I am comfortable that this is properly transforming my data.
+
+### Creating a Correlation Matrix
+
+I now would like to produce a correlation coefficient for the relationship between each of the studied variables in this study. This will give me the ability to have linear regressions between each variable, which will serve as the parameters in my SEM path model.
+
+```{r}
+#| echo: false
+annas_coor <- cor(annas_clean)
+#print correlation coefficient table. 
+rmarkdown::paged_table(as.data.frame(annas_coor))
+```
+
+# Visualizing Original Data
+
+Here, I visualize the original data from this experiment from Segre et al.
 
 ```{r}
 #| layout-ncol: 3
-x <- as.factor(0)
- viz <- annas_clean %>%
-   cross_join(x, copy = TRUE)
- 
- colNames <- names(viz)[1:17]
- 
- for (i in colNames) {
-   plot <- ggplot(viz, aes_string(x= viz$y, y = i))+ 
-     geom_violin(draw_quantiles = c(0.25, 0.5, 0.75))+
-     geom_point() +
-     theme_classic()
-  print(plot)
-  Sys.sleep(2)
-   
- }
+# x <- as.factor(0)
+#  viz <- annas_clean %>%
+#    cross_join(x, copy = TRUE)
+#  
+#  colNames <- names(viz)[1:17]
+#  
+#  for (i in colNames) {
+#    plot <- ggplot(viz, aes_string(x= viz$y, y = i))+ 
+#      geom_violin(draw_quantiles = c(0.25, 0.5, 0.75))+
+#      geom_point() +
+#      theme_classic()
+#   print(plot)
+#   Sys.sleep(2)
+#    
+#  }
 ```
 
 ### Investigating Distributions of Original Data
 
-```{r}
-normality_check <- as.data.frame(annas_clean)
-columns <- names(normality_check)
+I here explore the distributions of the original data. These are many figures, so I won't print for the time being.
 
-for (i in columns) {
-  plot <- hist(x = normality_check[,i])
-  plot2 <- qqnorm(normality_check[,i]) 
-    qqline(normality_check[,i])
-  print(plot)
-  print(plot2)
-}
+```{r}
+#| echo: false
+#| output: false
+# normality_check <- as.data.frame(annas_clean)
+# columns <- names(normality_check)
+# 
+# for (i in columns) {
+#   plot <- hist(x = normality_check[,i])
+#   plot2 <- qqnorm(normality_check[,i]) 
+#     qqline(normality_check[,i])
+#   print(plot)
+#   print(plot2)
+# }
 
 ```
 
-For each of the above distributions, I will group based on if the data is normal or otherwise distributed. Then using the mean and variance from the summary (mean and variance) data frame I will be able to establish fake data for this data set upon which to build a model.
-
-**The list of variables, in order, are below. This order corresponds with the order of plots from the above loop.**
-
-1.  mass
-
-2.  massSTD
-
-3.  w.lifted
-
-4.  w.liftedSTD
-
-5.  wing.ar
-
-6.  wing.arSTD
-
-7.  wing.length
-
-8.  wing.lengthSTD
-
-9.  mean.hor_acel
-
-10. mean.hor_decel
-
-11. mean.arc_avghvel
-
-12. mean.total_vel
-
-13. ss.pitch_roll
-
-14. mean.pr_time
-
-15. mean.pr_degrees
-
-16. mean.arc_force
-
-17. PRTpercent
-
-**Proposed Distributions**
-
-*Normal* 3. w.lifted 4. w.liftedSTD 5. wing.ar - appears to increase at end, hard to tell but most close to normal 6. wing.arSTD 7. wing.length 8. wing.lengthSTD 16. mean.arc_force
-
-*Beta* 1. mass - skewed right 2. massSTD 9. mean.hor_acel - left-skewed data 10. mean.hor_decel - left skewed data
-
-11\. mean.arc_avghvel - left skewed data
-
-12\. mean.total_vel - left skewed data
-
-13.ss.pitch_roll - right skewed
-
-14\. mean.pr_time - right skwewed
-
-15\. mean.pr_degrees - left skewed data
-
-17\. PRTpercent - left skewed
+I conclude that some of these data are distributed non-normally and are likely best represented as a beta distribution. For ease of this model, I will estimate that each variable is distributed normally to make for an easier time in [Generating Fake Data].
 
 ## Generating Fake Data
 
-For each variable, I will create a fake data set that has the same mean and variance, with a sample size of 32 individuals (same as the Segre et al., 2015 paper) and a distribution that is consistent with the original data.
+For each variable, I will create a fake data set that has the same mean and variance, with a sample size of 32 individuals (same as the Segre et al., 2015 paper) and a normal distribution.
 
-### Weight Lifted
+Below is code I use to generate fake data for each of the variables I'm investigating and visualizations of the data generated.
+
+First, here is the heading of the data I generated.
 
 ```{r}
-w.lifted.simu <- rnorm(n =32, mean = annas_summ[3,2], sd= sqrt(annas_summ[3,3]))
+#| echo: false
+#| output: false
+# simu_data <- data.frame(matrix(nrow=32))
+# simu_data$mass <- rnorm(n =32, mean = annas_summ[1,2], sd= sqrt(annas_summ[1,3]))
+# simu_data$w.lifted <- rnorm(n =32, mean = annas_summ[2,2], sd= sqrt(annas_summ[2,3]))
+# simu_data$wing.ar<- rnorm(n =32, mean = annas_summ[3,2], sd= sqrt(annas_summ[3,3]))
+# simu_data$wing.length <- rnorm(n =32, mean = annas_summ[4,2], sd= sqrt(annas_summ[4,3]))
+# simu_data$mean.hor_acel <- rnorm(n =32, mean = annas_summ[5,2], sd= sqrt(annas_summ[5,3]))
+# simu_data$mean.hor_decel <- rnorm(n =32, mean = annas_summ[6,2], sd= sqrt(annas_summ[6,3]))
+# simu_data$mean.arc_avghvel <- rnorm(n =32, mean = annas_summ[7,2], sd= sqrt(annas_summ[7,3]))
+# simu_data$mean.total_vel <- rnorm(n =32, mean = annas_summ[8,2], sd= sqrt(annas_summ[8,3]))
+# simu_data$ss.pitch_roll <- rnorm(n =32, mean = annas_summ[9,2], sd= sqrt(annas_summ[9,3]))
+# simu_data$mean.pr_time <- rnorm(n =32, mean = annas_summ[10,2], sd= sqrt(annas_summ[10,3]))
+# simu_data$mean.pr_degrees <- rnorm(n =32, mean = annas_summ[11,2], sd= sqrt(annas_summ[11,3]))
+# simu_data$mean.arc_force <- rnorm(n =32, mean = annas_summ[12,2], sd= sqrt(annas_summ[12,3]))
+# simu_data$PRTpercent <- rnorm(n =32, mean = annas_summ[13,2], sd= sqrt(annas_summ[13,3]))
+# 
 
-plot(w.lifted.simu, col = "blue",ylim = c(3,9))
-points(annas_clean$w.lifted, col = "red")
 
-hist(w.lifted.simu)
 ```
 
-### Horizontal Acceleration
+```{r}
+#| echo: false
+#head(simu_data)
+```
 
-I am having difficulty creating fake data sets with Beta distributions. For now, I am making a normally distributed fake data set for horizontal acceleration (variable 9) so that I can work on building a model around it, but need to come back to this distribution issue.
+In these visualizations, **blue points represent the simulated data and red points represent the real data.** This code will cycle through and generate data and visualizations for several, but not all of the [Measurement Variables] (in the interest of space).
 
 ```{r}
-mean.hor_acel_simu <- rnorm(n =32, mean = annas_summ[9,2], sd= sqrt(annas_summ[9,3]))
+#| echo: false
+# "mass"  
+# plot(simu_data[,2], col= "blue", ylim= c(min(annas_clean[,1])-1, max(annas_clean[,1])+1), main= "Mass")
+# points(annas_clean[,1], col = "red")
+# plot(density(simu_data[,2]), main= "Mass")
+# #"w.lifted"  
+# plot(simu_data[,3], col= "blue", ylim= c(min(annas_clean[,2])-1, max(annas_clean[,2])+1), main= "Weight Lifted")
+# points(annas_clean[,2], col = "red")
+# plot(density(simu_data[,3]), main= "Weight Lifted")
+#  # "wing.ar" 
+# plot(simu_data[,4], col= "blue", ylim= c(min(annas_clean[,3])-1, max(annas_clean[,3])+1), main= "Wing Aspect Ratio")
+# points(annas_clean[,3], col = "red")
+# plot(density(simu_data[,4]), main= "Wing Aspect Ratio")
+# #"wing.length"
+# plot(simu_data[,5], col= "blue", ylim= c(min(annas_clean[,4])-1, max(annas_clean[,4])+1), main= "Wing Length")
+# points(annas_clean[,4], col = "red")
+# plot(density(simu_data[,5]), main= "Wing Length")
+# # "mean.hor_acel" 
+# plot(simu_data[,6], col= "blue", ylim= c(min(annas_clean[,5])-1, max(annas_clean[,5])+1), main= "Horizontal Acceleration")
+# points(annas_clean[,5], col = "red")
+# plot(density(simu_data[,6]), main= "Horizontal Accleration")
+# # "mean.hor_decel"
+# plot(simu_data[,7], col= "blue", ylim= c(min(annas_clean[,6])-1, max(annas_clean[,6])+1), main= "Horizontal Deceleration")
+# points(annas_clean[,6], col = "red")
+# plot(density(simu_data[,7]), main= "Horizontal Deceleration")
+# #"mean.arc_avghvel"
+# #  "mean.arc_avghvel" 
+# #  "mean.total_vel"   
+# #  "ss.pitch_roll"   
+# #  "mean.pr_time"    
+# # "mean.pr_degrees"  
+# # "mean.arc_force"  
+# # "PRTpercent" 
 
-plot(mean.hor_acel_simu, col = "blue", ylim = c(2,11))
-points(annas_clean$mean.hor_acel, col = "red")
-hist(mean.hor_acel_simu)
+
+
 ```
 
 # Running a Phenotype-Performance Model
 
 ## Creating a Stan Model
 
-To begin, I have started with a simple stan model, connecting a linear regression of weight lifted as a phenotype and mean horizontal acceleration as a performance variable. Below is the commented Stan code.
+I have only begun to create a Stan Model, but intend to use the method published in Merkle et al., 2021 and am currently working on understanding this method.
 
-```{r}
-# data{
-#   int<lower=0> n; //number of samples 
-#   vector [n] wlifted; //independent variable in data, weight lifted
-#   vector [n] mhoracel; //dependent varible, mean horizontal acceleration
-# }
-# 
-# parameters{
-#   real a; //real number that is intercept of linear regression
-#   real b; //real number that is slope of linear regression 
-#   real <lower=0> sigma; //real number that is variance 
-# }
-# 
-# model{
-#   vector[n] yhat;
-#   yhat = a + b*wlifted;
-#   //setting priors for data
-#   mhoracel ~ normal(yhat, sigma);
-#   a ~ normal(0,5);
-#   b ~ normal(0,10); 
-#   sigma ~ normal(0,10);
-# }
-```
+I will input the Stan code below.
 
 ## Running Stan Model
 
 ```{r}
-annas_data_simu <- list(
-      n = length(w.lifted.simu),
-      mhoracel = as.numeric(mean.hor_acel_simu),
-      wlifted = as.numeric(w.lifted.simu)
-)
-
-annas_fit <- stan(file = "annas_performance_model.stan", data = annas_data_simu, iter = 1000, chains = 4)
-print(annas_fit)
+# annas_data_simu <- list(
+#       n = length(w.lifted.simu),
+#       mhoracel = as.numeric(mean.hor_acel_simu),
+#       wlifted = as.numeric(w.lifted.simu)
+# )
+# 
+# annas_fit <- stan(file = "annas_performance_model.stan", data = annas_data_simu, iter = 1000, chains = 4)
+# print(annas_fit)
 ```
 
 # 
@@ -286,4 +334,8 @@ print(annas_fit)
 
 **Bergmann and McElroy.** 2014. Many-to-Many Mapping of Phenotype to Performance: An Extension of the F-Matrix for Studying Functional Complexity. *Evolutionary Biology* 41:546--560. DOI 10.1007/s11692-014-9288-1
 
+**Garnier-Villarreal, M. and Jorgensen, T.D.** 2019.Adapting fit indices for Bayesian structural equation modeling: Comparison to maximum likelihood. *Psychological Methods.* DOI: 10.1037/met0000224
+
 **Márquez-Luna et al.** 2022. Genetic relatedness and morphology as drivers of interspecific dominance hierarchy in hummingbirds. *PeerJ.* DOI 10.7717/peerj.13331
+
+**Merkle, E.C. et al.** 2021. Efficient Bayesian Structural Equation Modeling in Stan. *Journal of Statistical Software.* DOI: 10.18637/jss.v100.i06.
